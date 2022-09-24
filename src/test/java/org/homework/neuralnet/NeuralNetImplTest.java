@@ -5,20 +5,49 @@ import org.junit.jupiter.api.Test;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
+import java.util.Arrays;
+import java.util.stream.Stream;
+
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 class NeuralNetImplTest {
 
+    NeuralNetImpl neuralNet;
 
     @BeforeEach
     void setUp() {
+        this.neuralNet = new NeuralNetImpl(2, 4, .2, .0, 1, 0);
+    }
+
+    @Test
+    void TEST_TRAIN_XOR_RANDOM() {
+        final double[][] x = this.getRandomInputVector(10, 2);
+        final double[][] yHat = this.getRandomInputVector(10, 1);
+        this.neuralNet.train(x, yHat);
+        this.printNNTrainState(x, yHat, this.neuralNet.forward(x).toDoubleMatrix());
+    }
+
+    @Test
+    void TEST_TRAIN_XOR_THEN_APPLY() {
+        final double[][] x = new double[][]{{0, 0}, {0, 1}, {1, 0}, {1, 1}};
+        final double[][] yHat = new double[][]{{0}, {1}, {1}, {0}};
+        this.neuralNet.train(x, yHat);
+        this.printNNTrainState(x, yHat, this.neuralNet.forward(x).toDoubleMatrix());
     }
 
     @Test
     void FORWARD_SHOULD_MAINTAIN_SHAPE() {
-        final NeuralNetImpl neuralNet = new NeuralNetImpl(5, 10, .5, .2, 1, 0);
-        final INDArray outputIndArray = neuralNet.forward(this.getRandomInputVector(1, 5));
+        final INDArray outputIndArray = this.neuralNet.forward(this.getRandomInputVector(1, 2));
         assertArrayEquals(new long[]{1, 1}, outputIndArray.shape());
+    }
+
+    @Test
+    void LOSS_FUNCTION_CAL_AS_EXPECTED() {
+        final double[][] randomOutputVector = this.getRandomInputVector(1, 1);
+        final double[][] targetArray = this.getRandomInputVector(1, 1);
+        final double[][] manualLoss = new double[1][1];
+        manualLoss[0][0] = Math.pow(randomOutputVector[0][0] - targetArray[0][0], 2) / 2;
+        assertArrayEquals(manualLoss, this.neuralNet.loss(Nd4j.create(randomOutputVector), Nd4j.create(targetArray)).toDoubleMatrix());
     }
 
     /**
@@ -31,4 +60,9 @@ class NeuralNetImplTest {
     private double[][] getRandomInputVector(final int nRows, final int nCols) {
         return Nd4j.rand(nRows, nCols).toDoubleMatrix();
     }
+
+    private void printNNTrainState(final double[][] X, final double[][] target, final double[][] actual) {
+        System.out.printf("Input: \n %s \n Target y: \n %s \n Actual y: \n %s \n", Stream.of(X, target, actual).map(Arrays::deepToString).toArray());
+    }
+
 }
