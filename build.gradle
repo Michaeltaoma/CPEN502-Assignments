@@ -4,6 +4,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 plugins {
     id 'java'
     id("com.bnorm.robocode") version "0.1.1"
+    id 'jacoco'
 }
 
 group 'org.homework'
@@ -29,6 +30,7 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport // report is always generated after tests run
 }
 
 
@@ -68,6 +70,9 @@ tasks.withType(Test) {
     }
 }
 
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
+}
 
 robocode {
     robots {
