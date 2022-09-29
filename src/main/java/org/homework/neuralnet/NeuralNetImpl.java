@@ -158,7 +158,7 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
 
     @Override
     public double sigmoid(final double x) {
-        return 2 / (1 + Math.pow(Math.E, (-1 * x))) - 1;
+        return 1 / (1 + Math.pow(Math.E, (-1 * x)));
     }
 
     @Override

@@ -3,6 +3,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
     id 'java'
+    id("com.bnorm.robocode") version "0.1.1"
 }
 
 group 'org.homework'
@@ -63,6 +64,17 @@ tasks.withType(Test) {
                 def repeatLength = startItem.length() + output.length() + endItem.length()
                 println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
             }
+        }
+    }
+}
+
+
+robocode {
+    robots {
+        register("TaoMaRobot") {
+            classPath = "org.homework.robot.TaoMaRobot"
+            version = "1.0"
+            description = "Description"
         }
     }
 }
