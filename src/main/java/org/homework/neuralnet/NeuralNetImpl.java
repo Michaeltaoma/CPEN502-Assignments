@@ -19,7 +19,7 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
   private static final Logger logger = LoggerFactory.getLogger(NeuralNetImpl.class);
   private static final DataType NEURAL_NET_DATA_TYPE = DataType.DOUBLE;
   private static final int DEFAULT_ARG_NUM_INPUT_ROWS = 1;
-  private static final int DEFAULT_PRINT_CYCLE = 1000;
+  private static final int DEFAULT_PRINT_CYCLE = 100;
   private static final int DEFAULT_ARG_NUM_OUTPUTS_COLS = 1;
   private static final double DEFAULT_ERROR_THRESHOLD = 0.05;
   private static final double DEFAULT_RAND_RANGE_DIFFERENCE = .5;
@@ -33,11 +33,13 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
   private INDArray inputToHiddenWeight;
   private INDArray deltaInputToHiddenWeight;
   private INDArray hiddenLayerBias;
+  private INDArray deltaHiddenLayerBias;
   private INDArray hiddenOutput;
   private INDArray hiddenToOutputWeight;
   private INDArray deltaHiddenToOutputWeight;
   private INDArray output;
   private INDArray outputLayerBias;
+  private INDArray deltaOutputLayerBias;
   private boolean isBipolar;
 
   public NeuralNetImpl(
@@ -146,44 +148,47 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
 
     final INDArray deltaOutputLayer =
         this.isBipolar
-            ? actualTargetDiff.mul(this.output.mul(-1).add(1).mul(this.output.add(1)).mul(.5))
+            ? actualTargetDiff.mul((this.output.mul(-1).add(1)).mul((this.output.add(1))).mul(.5))
             : actualTargetDiff.mul(this.output.mul(this.output.mul(-1).add(1)));
 
     this.deltaHiddenToOutputWeight =
         this.deltaHiddenToOutputWeight
             .mul(this.argMomentumTerm)
-            .add(this.hiddenOutput.transpose().mul(this.argLearningRate).mmul(deltaOutputLayer))
-            .mul(-1);
+            .add(this.hiddenOutput.transpose().mul(this.argLearningRate).mmul(deltaOutputLayer));
 
     // Calculate weight update for inputToHiddenWeight
     final INDArray deltaHiddenLayer =
         this.isBipolar
-            ? this.hiddenOutput
-                .mul(-1)
-                .add(1)
-                .mul(this.output.add(1))
+            ? (this.hiddenOutput.mul(-1).add(1))
+                .mul(this.hiddenOutput.add(1))
                 .mul(.5)
                 .mul(deltaOutputLayer.mmul(this.hiddenToOutputWeight.transpose()))
-            : this.hiddenOutput
-                .mul(-1)
-                .add(1)
+            : (this.hiddenOutput.mul(-1).add(1))
                 .mul(this.hiddenOutput)
                 .mul(deltaOutputLayer.mmul(this.hiddenToOutputWeight.transpose()));
 
     this.deltaInputToHiddenWeight =
         this.deltaInputToHiddenWeight
             .mul(this.argMomentumTerm)
-            .add(this.input.transpose().mul(this.argLearningRate).mmul(deltaHiddenLayer))
-            .mul(-1);
+            .add(this.input.transpose().mul(this.argLearningRate).mmul(deltaHiddenLayer));
 
     // Perform the update
-    this.hiddenToOutputWeight = this.hiddenToOutputWeight.add(this.deltaHiddenToOutputWeight);
-    this.inputToHiddenWeight = this.inputToHiddenWeight.add(this.deltaInputToHiddenWeight);
+    this.hiddenToOutputWeight = this.hiddenToOutputWeight.sub(this.deltaHiddenToOutputWeight);
+    this.inputToHiddenWeight = this.inputToHiddenWeight.sub(this.deltaInputToHiddenWeight);
 
-    this.hiddenLayerBias =
-        this.hiddenLayerBias.add(deltaHiddenLayer.mul(-1).mul(this.argLearningRate));
-    this.outputLayerBias =
-        this.outputLayerBias.add(deltaOutputLayer.mul(-1).mul(this.argLearningRate));
+    // Calculate bias update
+    this.deltaHiddenLayerBias =
+        this.deltaHiddenLayerBias
+            .mul(this.argMomentumTerm)
+            .add(deltaHiddenLayer.mul(this.argLearningRate));
+
+    this.deltaOutputLayerBias =
+        this.deltaOutputLayerBias
+            .mul(this.argMomentumTerm)
+            .add(deltaOutputLayer.mul(this.argLearningRate));
+
+    this.hiddenLayerBias = this.hiddenLayerBias.sub(this.deltaHiddenLayerBias);
+    this.outputLayerBias = this.outputLayerBias.sub(this.deltaOutputLayerBias);
   }
 
   /**
@@ -197,6 +202,12 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
     return Transforms.pow(actualOutput.sub(targetOutput), 2).mul(.5);
   }
 
+  /**
+   * Calculate sigmoid for every entry of the matrix
+   *
+   * @param indArray Matrix needed to be sigmoided
+   * @return Matrix after applying sigmoid
+   */
   public INDArray sigmoidMatrix(final INDArray indArray) {
     if (!this.isBipolar) return Transforms.sigmoid(indArray);
 
@@ -259,6 +270,11 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
         Nd4j.rand(NEURAL_NET_DATA_TYPE, DEFAULT_ARG_NUM_INPUT_ROWS, this.argNumHidden);
     this.output =
         Nd4j.rand(NEURAL_NET_DATA_TYPE, DEFAULT_ARG_NUM_INPUT_ROWS, DEFAULT_ARG_NUM_OUTPUTS_COLS);
+
+    this.deltaHiddenLayerBias =
+        Nd4j.zeros(NEURAL_NET_DATA_TYPE, DEFAULT_ARG_NUM_INPUT_ROWS, this.argNumHidden);
+    this.deltaOutputLayerBias =
+        Nd4j.zeros(NEURAL_NET_DATA_TYPE, DEFAULT_ARG_NUM_INPUT_ROWS, DEFAULT_ARG_NUM_OUTPUTS_COLS);
 
     this.deltaInputToHiddenWeight =
         Nd4j.zeros(NEURAL_NET_DATA_TYPE, this.argNumInputs, this.argNumHidden);
