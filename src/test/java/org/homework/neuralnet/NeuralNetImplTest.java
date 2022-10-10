@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class NeuralNetImplTest {
 
@@ -67,10 +68,16 @@ class NeuralNetImplTest {
 
   @Test
   void SAVE_AND_LOAD_WEIGHTS() throws IOException {
+    final INDArray inputToHiddenWeight = this.neuralNet.getInputToHiddenWeight();
+    final INDArray hiddenToOutputWeight = this.neuralNet.getHiddenToOutputWeight();
+
     String filename = "./weights";
     File file = new File(filename);
     this.neuralNet.save(file);
     this.neuralNet.load(filename);
+
+    assertEquals(inputToHiddenWeight, this.neuralNet.getInputToHiddenWeight());
+    assertEquals(hiddenToOutputWeight, this.neuralNet.getHiddenToOutputWeight());
   }
 
   /**
