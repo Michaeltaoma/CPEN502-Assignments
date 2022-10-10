@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
@@ -61,6 +63,14 @@ class NeuralNetImplTest {
         this.neuralNet
             .loss(Nd4j.create(randomOutputVector), Nd4j.create(targetArray))
             .toDoubleMatrix());
+  }
+
+  @Test
+  void SAVE_AND_LOAD_WEIGHTS() throws IOException {
+    String filename = "./weights";
+    File file = new File(filename);
+    this.neuralNet.save(file);
+    this.neuralNet.load(filename);
   }
 
   /**
