@@ -9,7 +9,13 @@ import org.nd4j.linalg.ops.transforms.Transforms;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.Serializable;
 
 @Getter
 @Setter
@@ -282,13 +288,13 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
   @Override
   public void save(final File argFile) {
     try {
-      FileOutputStream fileOutputStream = new FileOutputStream(argFile, false);
-      PrintStream printStream = new PrintStream(fileOutputStream);
+      final FileOutputStream fileOutputStream = new FileOutputStream(argFile, false);
+      final PrintStream printStream = new PrintStream(fileOutputStream);
 
-      long inputToHiddenWeightRows = this.inputToHiddenWeight.size(0);
-      long inputToHiddenWeightCols = this.inputToHiddenWeight.size(1);
-      long hiddenToOutputWeightRows = this.hiddenToOutputWeight.size(0);
-      long hiddenToOutputWeightCols = this.hiddenToOutputWeight.size(1);
+      final long inputToHiddenWeightRows = this.inputToHiddenWeight.size(0);
+      final long inputToHiddenWeightCols = this.inputToHiddenWeight.size(1);
+      final long hiddenToOutputWeightRows = this.hiddenToOutputWeight.size(0);
+      final long hiddenToOutputWeightCols = this.hiddenToOutputWeight.size(1);
       printStream.println(inputToHiddenWeightRows);
       printStream.println(inputToHiddenWeightCols);
       printStream.println(hiddenToOutputWeightRows);
@@ -307,8 +313,7 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
 
       printStream.flush();
       printStream.close();
-    }
-    catch (IOException error) {
+    } catch (final IOException error) {
       System.out.println("Failed to save the weights of a neural net.");
     }
   }
@@ -316,17 +321,19 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
   @Override
   public void load(final String argFileName) throws IOException {
     try {
-      BufferedReader bufferedReader = new BufferedReader(new FileReader(argFileName));
-      long inputToHiddenWeightRows = Long.valueOf(bufferedReader.readLine());
-      long inputToHiddenWeightCols = Long.valueOf(bufferedReader.readLine());
-      long hiddenToOutputWeightRows = Long.valueOf(bufferedReader.readLine());
-      long hiddenToOutputWeightCols = Long.valueOf(bufferedReader.readLine());
-      if ((inputToHiddenWeightRows != this.inputToHiddenWeight.size(0)) || (inputToHiddenWeightCols != this.inputToHiddenWeight.size(1))) {
+      final BufferedReader bufferedReader = new BufferedReader(new FileReader(argFileName));
+      final long inputToHiddenWeightRows = Long.parseLong(bufferedReader.readLine());
+      final long inputToHiddenWeightCols = Long.parseLong(bufferedReader.readLine());
+      final long hiddenToOutputWeightRows = Long.parseLong(bufferedReader.readLine());
+      final long hiddenToOutputWeightCols = Long.parseLong(bufferedReader.readLine());
+      if ((inputToHiddenWeightRows != this.inputToHiddenWeight.size(0))
+          || (inputToHiddenWeightCols != this.inputToHiddenWeight.size(1))) {
         logger.info("wrong number of input neurons");
         bufferedReader.close();
         throw new IOException();
       }
-      if ((hiddenToOutputWeightRows != this.hiddenToOutputWeight.size(0)) || (hiddenToOutputWeightCols != this.hiddenToOutputWeight.size(1))) {
+      if ((hiddenToOutputWeightRows != this.hiddenToOutputWeight.size(0))
+          || (hiddenToOutputWeightCols != this.hiddenToOutputWeight.size(1))) {
         logger.info("wrong number of hidden neurons");
         bufferedReader.close();
         throw new IOException();
@@ -344,8 +351,7 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
       }
 
       bufferedReader.close();
-    }
-    catch (IOException error) {
+    } catch (final IOException error) {
       System.out.println("Failed to open reader: " + error);
     }
   }
