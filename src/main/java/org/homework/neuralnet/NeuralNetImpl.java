@@ -9,9 +9,7 @@ import org.nd4j.linalg.ops.transforms.Transforms;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 
 @Getter
 @Setter
@@ -145,7 +143,6 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
     final INDArray actualTargetDiff = actualOutput.sub(targetOutput);
 
     // Calculate weight update for hiddenToOutputWeight
-
     final INDArray deltaOutputLayer =
         this.isBipolar
             ? actualTargetDiff.mul((this.output.mul(-1).add(1)).mul((this.output.add(1))).mul(.5))
@@ -283,8 +280,73 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
   }
 
   @Override
-  public void save(final File argFile) {}
+  public void save(final File argFile) {
+    try {
+      FileOutputStream fileOutputStream = new FileOutputStream(argFile, false);
+      PrintStream printStream = new PrintStream(fileOutputStream);
+
+      long inputToHiddenWeightRows = this.inputToHiddenWeight.size(0);
+      long inputToHiddenWeightCols = this.inputToHiddenWeight.size(1);
+      long hiddenToOutputWeightRows = this.hiddenToOutputWeight.size(0);
+      long hiddenToOutputWeightCols = this.hiddenToOutputWeight.size(1);
+      printStream.println(inputToHiddenWeightRows);
+      printStream.println(inputToHiddenWeightCols);
+      printStream.println(hiddenToOutputWeightRows);
+      printStream.println(hiddenToOutputWeightCols);
+
+      for (int x = 0; x < inputToHiddenWeightRows; ++x) {
+        for (int y = 0; y < inputToHiddenWeightCols; ++y) {
+          printStream.println(this.inputToHiddenWeight.getDouble(x, y));
+        }
+      }
+      for (int x = 0; x < hiddenToOutputWeightRows; ++x) {
+        for (int y = 0; y < hiddenToOutputWeightCols; ++y) {
+          printStream.println(this.hiddenToOutputWeight.getDouble(x, y));
+        }
+      }
+
+      printStream.flush();
+      printStream.close();
+    }
+    catch (IOException error) {
+      System.out.println("Failed to save the weights of a neural net.");
+    }
+  }
 
   @Override
-  public void load(final String argFileName) throws IOException {}
+  public void load(final String argFileName) throws IOException {
+    try {
+      BufferedReader bufferedReader = new BufferedReader(new FileReader(argFileName));
+      long inputToHiddenWeightRows = Long.valueOf(bufferedReader.readLine());
+      long inputToHiddenWeightCols = Long.valueOf(bufferedReader.readLine());
+      long hiddenToOutputWeightRows = Long.valueOf(bufferedReader.readLine());
+      long hiddenToOutputWeightCols = Long.valueOf(bufferedReader.readLine());
+      if ((inputToHiddenWeightRows != this.inputToHiddenWeight.size(0)) || (inputToHiddenWeightCols != this.inputToHiddenWeight.size(1))) {
+        logger.info("wrong number of input neurons");
+        bufferedReader.close();
+        throw new IOException();
+      }
+      if ((hiddenToOutputWeightRows != this.hiddenToOutputWeight.size(0)) || (hiddenToOutputWeightCols != this.hiddenToOutputWeight.size(1))) {
+        logger.info("wrong number of hidden neurons");
+        bufferedReader.close();
+        throw new IOException();
+      }
+
+      for (int x = 0; x < inputToHiddenWeightRows; ++x) {
+        for (int y = 0; y < inputToHiddenWeightCols; ++y) {
+          this.inputToHiddenWeight.put(x, y, Double.valueOf(bufferedReader.readLine()));
+        }
+      }
+      for (int x = 0; x < hiddenToOutputWeightRows; ++x) {
+        for (int y = 0; y < hiddenToOutputWeightCols; ++y) {
+          this.hiddenToOutputWeight.put(x, y, Double.valueOf(bufferedReader.readLine()));
+        }
+      }
+
+      bufferedReader.close();
+    }
+    catch (IOException error) {
+      System.out.println("Failed to open reader: " + error);
+    }
+  }
 }
