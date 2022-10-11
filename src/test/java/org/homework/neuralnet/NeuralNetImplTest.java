@@ -39,7 +39,7 @@ class NeuralNetImplTest {
   }
 
   @Test
-  void test_train_xor_bipolar() {
+  void TEST_TRAIN_XOR_BIPOLAR() {
     this.neuralNet.setBipolar(true);
     final double[][] x = new double[][] {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
     final double[][] yHat = new double[][] {{-1}, {1}, {1}, {-1}};
@@ -71,8 +71,8 @@ class NeuralNetImplTest {
     final INDArray inputToHiddenWeight = this.neuralNet.getInputToHiddenWeight();
     final INDArray hiddenToOutputWeight = this.neuralNet.getHiddenToOutputWeight();
 
-    String filename = "./weights";
-    File file = new File(filename);
+    final String filename = "./weights";
+    final File file = new File(filename);
     this.neuralNet.save(file);
     this.neuralNet.load(filename);
 
