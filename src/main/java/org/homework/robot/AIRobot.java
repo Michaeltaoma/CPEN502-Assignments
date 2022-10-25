@@ -4,8 +4,20 @@ import robocode.Robot;
 import robocode.ScannedRobotEvent;
 
 import java.awt.*;
+import java.util.Arrays;
 
-public class TaoMaRobot extends Robot {
+public class AIRobot extends Robot {
+
+  public static void main(final String[] args) {
+    //
+    final double[] currentState = new double[] {1.0, 2.0, 100.0, 100.0};
+
+    final double[] nextState = Action.Fire.toNextPos(currentState);
+
+    System.out.printf(
+        "Previous: %s\n Current: %s", Arrays.toString(currentState), Arrays.toString(nextState));
+  }
+
   public void run() {
     this.setAdjustGunForRobotTurn(true);
     this.setBodyColor(Color.pink);
