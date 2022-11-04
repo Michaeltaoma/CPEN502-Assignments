@@ -4,11 +4,13 @@ import lombok.Getter;
 import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Random;
 
 @Getter
@@ -66,6 +68,10 @@ public class LUTImpl implements LUTInterface {
   }
 
   int chooseGreedyAction(final int... dimension) {
+    // given state, get the max action value from q table
+    // example: action = np.argmax(Q_table[state[0], state[1],state[2],state[3]])
+    // -> find the best action based on Q(s,a') from Q(s)
+    // so dimension should contain state info
     return 0;
   }
 
