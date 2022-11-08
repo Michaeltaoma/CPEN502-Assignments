@@ -4,102 +4,104 @@ import lombok.Getter;
 import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Random;
 
 @Getter
 public class LUTImpl implements LUTInterface {
 
-  private static final Logger logger = LoggerFactory.getLogger(LUTImpl.class);
-  private static final DataType LUT_DATA_TYPE = DataType.DOUBLE;
-  private final int argNumInputs;
-  private final long battleFieldWidth;
-  private final long battleFieldHeight;
-  private final double epsilon;
-  private final int actionSize;
-  private final int[] argVariableFloor;
-  private final int[] argVariableCeiling;
-  public INDArray qTable;
+    private static final Logger logger = LoggerFactory.getLogger(LUTImpl.class);
+    private static final DataType LUT_DATA_TYPE = DataType.DOUBLE;
+    private final int argNumInputs;
+    private final long battleFieldWidth;
+    private final long battleFieldHeight;
+    private final double epsilon;
+    private final int actionSize;
+    private final int[] argVariableFloor;
+    private final int[] argVariableCeiling;
+    public INDArray qTable;
 
-  public LUTImpl(
-      final int argNumInputs,
-      final long battleFieldWidth,
-      final long battleFieldHeight,
-      final int actionSize,
-      final double epsilon,
-      final int[] argVariableFloor,
-      final int[] argVariableCeiling) {
-    this.argNumInputs = argNumInputs;
-    this.battleFieldWidth = battleFieldWidth;
-    this.battleFieldHeight = battleFieldHeight;
-    this.actionSize = actionSize;
-    this.epsilon = epsilon;
-    this.argVariableFloor = argVariableFloor;
-    this.argVariableCeiling = argVariableCeiling;
+    public LUTImpl(
+            final int argNumInputs,
+            final long battleFieldWidth,
+            final long battleFieldHeight,
+            final int actionSize,
+            final double epsilon,
+            final int[] argVariableFloor,
+            final int[] argVariableCeiling) {
+        this.argNumInputs = argNumInputs;
+        this.battleFieldWidth = battleFieldWidth;
+        this.battleFieldHeight = battleFieldHeight;
+        this.actionSize = actionSize;
+        this.epsilon = epsilon;
+        this.argVariableFloor = argVariableFloor;
+        this.argVariableCeiling = argVariableCeiling;
 
-    this.initialiseLUT();
-  }
-
-  @Override
-  public void initialiseLUT() {
-    this.qTable =
-        Nd4j.rand(LUT_DATA_TYPE, this.battleFieldHeight, this.battleFieldHeight, this.actionSize);
-  }
-
-  @Override
-  public int indexFor(final double[] X) {
-    return 0;
-  }
-
-  /** Perform q learning on state action table */
-  int chooseAction(final int... dimension) {
-    if (Math.random() < this.epsilon) {
-      // explore
-      return this.chooseRandomAction();
+        this.initialiseLUT();
     }
 
-    return this.chooseGreedyAction(dimension);
-  }
+    @Override
+    public void initialiseLUT() {
+        this.qTable =
+                Nd4j.rand(
+                        LUT_DATA_TYPE,
+                        this.battleFieldHeight,
+                        this.battleFieldHeight,
+                        this.actionSize);
+    }
 
-  int chooseGreedyAction(final int... dimension) {
-    // given state, get the max action value from q table
-    // example: action = np.argmax(Q_table[state[0], state[1],state[2],state[3]])
-    // -> find the best action based on Q(s,a') from Q(s)
-    // so dimension should contain state info
-    return 0;
-  }
+    @Override
+    public int indexFor(final double[] X) {
+        return 0;
+    }
 
-  int chooseRandomAction() {
-    return new Random().nextInt(this.actionSize);
-  }
+    /** Perform q learning on state action table */
+    int chooseAction(final int... dimension) {
+        if (Math.random() < this.epsilon) {
+            // explore
+            return this.chooseRandomAction();
+        }
 
-  void setQValue(final double qValue, final int... dimension) {
-    this.qTable.putScalar(dimension, qValue);
-  }
+        return this.chooseGreedyAction(dimension);
+    }
 
-  double getQValue(final int... dimension) {
-    return this.qTable.getDouble(dimension);
-  }
+    int chooseGreedyAction(final int... dimension) {
+        // given state, get the max action value from q table
+        // example: action = np.argmax(Q_table[state[0], state[1],state[2],state[3]])
+        // -> find the best action based on Q(s,a') from Q(s)
+        // so dimension should contain state info
+        return 0;
+    }
 
-  @Override
-  public double outputFor(final double[] X) {
-    return 0;
-  }
+    int chooseRandomAction() {
+        return new Random().nextInt(this.actionSize);
+    }
 
-  @Override
-  public double train(final double[] X, final double argValue) {
-    return 0;
-  }
+    void setQValue(final double qValue, final int... dimension) {
+        this.qTable.putScalar(dimension, qValue);
+    }
 
-  @Override
-  public void save(final File argFile) {}
+    double getQValue(final int... dimension) {
+        return this.qTable.getDouble(dimension);
+    }
 
-  @Override
-  public void load(final String argFileName) throws IOException {}
+    @Override
+    public double outputFor(final double[] X) {
+        return 0;
+    }
+
+    @Override
+    public double train(final double[] X, final double argValue) {
+        return 0;
+    }
+
+    @Override
+    public void save(final File argFile) {}
+
+    @Override
+    public void load(final String argFileName) throws IOException {}
 }
