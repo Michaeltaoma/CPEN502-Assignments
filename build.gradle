@@ -76,7 +76,7 @@ jacocoTestReport {
 
 robocode {
     robots {
-        register("TaoMaRobot") {
+        register("AIRobot") {
             classPath = "org.homework.robot.AIRobot"
             version = "1.0"
             description = "Description"
