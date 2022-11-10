@@ -1,60 +1,56 @@
 package org.homework.robot;
 
+import robocode.AdvancedRobot;
+import robocode.BattleEndedEvent;
 import robocode.BulletHitEvent;
 import robocode.BulletMissedEvent;
 import robocode.DeathEvent;
 import robocode.HitByBulletEvent;
 import robocode.HitRobotEvent;
 import robocode.HitWallEvent;
-import robocode.Robot;
+import robocode.RobocodeFileOutputStream;
 import robocode.ScannedRobotEvent;
 import robocode.WinEvent;
 
 import java.awt.*;
-import java.util.Arrays;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 
-public class AIRobot extends Robot {
+import static org.homework.Util.closeOutputStream;
 
-    public static void main(final String[] args) {
+public class AIRobot extends AdvancedRobot {
+    private RobocodeFileOutputStream robocodeFileOutputStream = null;
+    private boolean colorChangeSwitch = true;
 
-        final double[] currentState = new double[] {1.0, 2.0, 100.0, 100.0};
-        final double[] nextState = Action.Fire.toNextPos(currentState);
-
-        System.out.printf(
-                "Previous: %s\n Current: %s",
-                Arrays.toString(currentState), Arrays.toString(nextState));
-
-        final double alpha = 0.3; // learning rate
-        final double gamma = 0.9; // discount factor
-        final boolean isOffPolicy = true; // on/off policy
-
-        //    public LUTImpl qTable = new LUTImpl();
-    }
-
+    @Override
     public void run() {
-        this.setAdjustGunForRobotTurn(true);
-        this.setBodyColor(Color.pink);
-        this.setRadarColor(Color.orange);
+        this.initRobocodeFileOutputStream();
 
         while (true) {
-            /**
-             * switch mode (scan or move) when move: choose action -> move -> update Q when scan:
-             * turn radar??
-             */
+            this.scan();
+            this.act();
         }
     }
 
-    public void act(final Action action) {
-        if (action == Action.Fire) {}
+    /**
+     * switch mode (scan or move) when move: choose action -> move -> update Q when scan: turn
+     * Currently it just do dumb thing
+     */
+    private void act() {
+        this.setBodyColor(this.colorChangeSwitch ? Color.pink : Color.black);
+        this.colorChangeSwitch = !this.colorChangeSwitch;
+    }
+
+    @Override
+    public void onScannedRobot(final ScannedRobotEvent event) {
+        this.info(
+                String.format("Event: %s, Energy bearing: %f", event.getName(), event.getEnergy()));
     }
 
     public void calculateQValue(final boolean isOffPolicy) {
         // calculate q
         // update q
-    }
-
-    public void onScannedRobot(final ScannedRobotEvent e) {
-        final double enemyBearing = e.getBearing();
     }
 
     @Override
@@ -90,5 +86,50 @@ public class AIRobot extends Robot {
     @Override
     public void onDeath(final DeathEvent e) {
         // update reward
+    }
+
+    @Override
+    public void onBattleEnded(final BattleEndedEvent event) {
+        closeOutputStream(this.robocodeFileOutputStream);
+    }
+
+    /**
+     * Log string to the log file created, easier for debug
+     *
+     * @param msg message to be logged
+     */
+    private void info(final String msg) {
+        try {
+            this.robocodeFileOutputStream.write(
+                    String.format("%s\n", msg).getBytes(StandardCharsets.UTF_8));
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /** initialize the logger for the robot */
+    private void initRobocodeFileOutputStream() {
+        if (this.robocodeFileOutputStream != null) return;
+
+        final String targetLogFilePath = this.getLogFileName();
+
+        try {
+            this.robocodeFileOutputStream =
+                    new RobocodeFileOutputStream(this.getDataFile(targetLogFilePath));
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        this.info("Successfully initialized robocode logger");
+    }
+
+    /**
+     * Get log file name. Naming convention: robot + current time in ms The log file will be created
+     * by robocode in robocode/robots/.data/org/homework/robot/AIRobot.data
+     *
+     * @return name
+     */
+    private String getLogFileName() {
+        return String.format("robot-%d.txt", new Date().getTime());
     }
 }
