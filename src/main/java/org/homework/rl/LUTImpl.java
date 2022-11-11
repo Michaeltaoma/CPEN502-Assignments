@@ -62,21 +62,25 @@ public class LUTImpl implements LUTInterface {
         return 0;
     }
 
-    /** Perform q learning on state action table */
+    /**
+     * most time we will find the greedy action, but also do some exploration
+     * @param dimension an array contains states info which will be used later for choosing best action
+     * @return the index of the chosen action
+     */
     public int chooseAction(final int[] dimension) {
         if (Math.random() < epsilon) {
             // explore
             return this.chooseRandomAction();
         }
-
         return this.chooseGreedyAction(dimension);
     }
 
+    /**
+     * given state, get the max action value from q table
+     * @param dimension an array contains states info, so that we can find the best action based on Q(s,a') from Q(s)
+     * @return the index of the best action
+     */
     int chooseGreedyAction(final int[] dimension) {
-        // given state, get the max action value from q table
-        // example: action = np.argmax(Q_table[state[0], state[1],state[2],...])
-        // -> find the best action based on Q(s,a') from Q(s)
-        // so dimension should contain state info
         INDArray qValues = this.qTable.get(NDArrayIndex.point(dimension[0]));
         for (int i = 1; i < dimension.length; ++i) {
             qValues = qValues.get(NDArrayIndex.point(dimension[i]));
@@ -96,6 +100,13 @@ public class LUTImpl implements LUTInterface {
         return this.qTable.getDouble(dimension);
     }
 
+    /**
+     *
+     * @param prevDimension an array contains previous states and action info to get previous Q value Q(s',a')
+     * @param curDimension an array contains current states and action info to get current Q value Q(s,a)
+     * @param reward an integer represents reward
+     * @param isOnPolicy if true, then use Sarsa. Otherwise, use Q learning
+     */
     public void computeQValue(int[] prevDimension, int[] curDimension, double reward, boolean isOnPolicy) {
         double prevQValue = getQValue(prevDimension);
         double curQValue = getQValue(curDimension);
