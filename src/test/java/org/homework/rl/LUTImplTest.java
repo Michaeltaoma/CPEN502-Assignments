@@ -1,5 +1,7 @@
 package org.homework.rl;
 
+import org.homework.robot.model.ImmutableState;
+import org.homework.robot.model.State;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -36,5 +38,12 @@ class LUTImplTest {
     void TEST_CHOOSE_GREEDY_ACTION() {
         final LUTImpl lut = new LUTImpl(3, 3, 3, 3, 5);
         assertTrue(lut.chooseGreedyAction(new int[] {2,2,2,2}) < 5);
+    }
+
+    @Test
+    void see_if_state_prints_anything() {
+        final State state = ImmutableState.builder().build();
+
+        System.out.println(state);
     }
 }
