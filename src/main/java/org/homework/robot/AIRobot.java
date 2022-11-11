@@ -1,18 +1,14 @@
 package org.homework.robot;
 
+import org.homework.robot.model.Action;
+import org.homework.robot.model.ImmutableState;
+import org.homework.robot.model.State;
+import org.homework.robot.model.StateName;
 import robocode.AdvancedRobot;
 import robocode.BattleEndedEvent;
-import robocode.BulletHitEvent;
-import robocode.BulletMissedEvent;
-import robocode.DeathEvent;
-import robocode.HitByBulletEvent;
-import robocode.HitRobotEvent;
-import robocode.HitWallEvent;
 import robocode.RobocodeFileOutputStream;
 import robocode.ScannedRobotEvent;
-import robocode.WinEvent;
 
-import java.awt.*;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -21,13 +17,16 @@ import static org.homework.Util.closeOutputStream;
 
 public class AIRobot extends AdvancedRobot {
     private RobocodeFileOutputStream robocodeFileOutputStream = null;
-    private boolean colorChangeSwitch = true;
+
+    private boolean doesScanRun = false;
+    private Action currentAction = Action.AHEAD;
 
     @Override
     public void run() {
         this.initRobocodeFileOutputStream();
 
         while (true) {
+            this.setTurnRadarLeftRadians(2 * Math.PI);
             this.scan();
             this.act();
         }
@@ -38,59 +37,55 @@ public class AIRobot extends AdvancedRobot {
      * Currently it just do dumb thing
      */
     private void act() {
-        this.setBodyColor(this.colorChangeSwitch ? Color.pink : Color.black);
-        this.colorChangeSwitch = !this.colorChangeSwitch;
+        this.setTurnLeft(this.currentAction.getDirection()[0]);
+        this.setTurnRight(this.currentAction.getDirection()[1]);
+        this.setAhead(this.currentAction.getDirection()[2]);
+        this.execute();
     }
 
     @Override
     public void onScannedRobot(final ScannedRobotEvent event) {
-        this.info(
-                String.format("Event: %s, Energy bearing: %f", event.getName(), event.getEnergy()));
+        final State currentState = this.getCurrentState(event);
+        this.doesScanRun = !this.doesScanRun;
+        this.info(String.format("Current State: %s\n", currentState));
+        this.currentAction = this.chooseCurrentAction();
     }
 
-    public void calculateQValue(final boolean isOffPolicy) {
-        // calculate q
-        // update q
+    public State getCurrentState(final ScannedRobotEvent event) {
+
+        return ImmutableState.builder()
+                .currentHP(this.toHP(this.getEnergy()))
+                .distanceToEnemy(this.toDistanceToEnemy(event.getDistance()))
+                .build();
     }
 
-    @Override
-    public void onHitByBullet(final HitByBulletEvent e) {
-        // update reward
-    }
-
-    @Override
-    public void onBulletHit(final BulletHitEvent e) {
-        // update reward
-    }
-
-    @Override
-    public void onBulletMissed(final BulletMissedEvent e) {
-        // update reward
-    }
-
-    @Override
-    public void onHitWall(final HitWallEvent e) {
-        // update reward
-    }
-
-    @Override
-    public void onHitRobot(final HitRobotEvent e) {
-        // update reward
-    }
-
-    @Override
-    public void onWin(final WinEvent e) {
-        // update reward
-    }
-
-    @Override
-    public void onDeath(final DeathEvent e) {
-        // update reward
+    public Action chooseCurrentAction() {
+        return this.doesScanRun ? Action.AHEAD : Action.TURN_LEFT;
     }
 
     @Override
     public void onBattleEnded(final BattleEndedEvent event) {
         closeOutputStream(this.robocodeFileOutputStream);
+    }
+
+    StateName.HP toHP(final double hp) {
+        if (hp < 30) {
+            return StateName.HP.LOW;
+        } else if (hp < 60) {
+            return StateName.HP.MID;
+        } else {
+            return StateName.HP.HIGH;
+        }
+    }
+
+    StateName.DISTANCE_TO_ENEMY toDistanceToEnemy(final double distance) {
+        if (distance < 30) {
+            return StateName.DISTANCE_TO_ENEMY.LOW;
+        } else if (distance < 60) {
+            return StateName.DISTANCE_TO_ENEMY.MID;
+        } else {
+            return StateName.DISTANCE_TO_ENEMY.HIGH;
+        }
     }
 
     /**
@@ -120,7 +115,8 @@ public class AIRobot extends AdvancedRobot {
             throw new RuntimeException(e);
         }
 
-        this.info("Successfully initialized robocode logger");
+        this.info(
+                String.format("Successfully initialized robocode logger: %s\n", targetLogFilePath));
     }
 
     /**

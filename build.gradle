@@ -26,6 +26,15 @@ dependencies {
 
     implementation "org.nd4j:nd4j-native-platform:1.0.0-M1.1"
     implementation "org.nd4j:nd4j-native-platform:1.0.0-M1.1"
+
+    annotationProcessor 'org.immutables:value:2.9.2'
+    implementation 'org.immutables:value:2.9.2'
+
+    // 1. Use Guava in your implementation only:
+    implementation("com.google.guava:guava:31.1-jre")
+
+    // 2. Use Guava types in your public API:
+    api("com.google.guava:guava:31.1-jre")
 }
 
 test {
