@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Random;
 
 @Getter
@@ -18,12 +19,15 @@ public class LUTImpl implements LUTInterface {
     private static final Logger logger = LoggerFactory.getLogger(LUTImpl.class);
     private static final DataType LUT_DATA_TYPE = DataType.DOUBLE;
 
+    private static final double learningRate = 0.1;
+    private static final double discountFactor = 0.9;
+    private static final double epsilon = 0.9;
+
     private final int myHPTypes;
     private final int enemyHPTypes;
     private final int distanceToEnemyTypes;
     private final int distanceToWallTypes;
     private final int actionSize;
-    private final double epsilon;
     public INDArray qTable;
 
     public LUTImpl(
@@ -31,14 +35,12 @@ public class LUTImpl implements LUTInterface {
             final int enemyHPTypes,
             final int distanceToEnemyTypes,
             final int distanceToWallTypes,
-            final int actionSize,
-            final double epsilon) {
+            final int actionSize) {
         this.myHPTypes = myHPTypes;
         this.enemyHPTypes = enemyHPTypes;
         this.distanceToEnemyTypes = distanceToEnemyTypes;
         this.distanceToWallTypes = distanceToWallTypes;
         this.actionSize = actionSize;
-        this.epsilon = epsilon;
 
         this.initialiseLUT();
     }
@@ -62,7 +64,7 @@ public class LUTImpl implements LUTInterface {
 
     /** Perform q learning on state action table */
     public int chooseAction(final int[] dimension) {
-        if (Math.random() < this.epsilon) {
+        if (Math.random() < epsilon) {
             // explore
             return this.chooseRandomAction();
         }
@@ -92,6 +94,20 @@ public class LUTImpl implements LUTInterface {
 
     double getQValue(final int[] dimension) {
         return this.qTable.getDouble(dimension);
+    }
+
+    public void computeQValue(int[] prevDimension, int[] curDimension, double reward, boolean isOnPolicy) {
+        double prevQValue = getQValue(prevDimension);
+        double curQValue = getQValue(curDimension);
+        if (isOnPolicy) {
+            // Sarsa
+            setQValue(prevQValue + learningRate * (reward + discountFactor * curQValue - prevQValue), prevDimension);
+        } else {
+            // Q learning
+            curDimension[curDimension.length-1] = chooseGreedyAction(Arrays.copyOf(curDimension, curDimension.length-1));
+            double maxQValue = getQValue(curDimension);
+            setQValue(prevQValue + learningRate * (reward + discountFactor * maxQValue - prevQValue), prevDimension);
+        }
     }
 
     @Override

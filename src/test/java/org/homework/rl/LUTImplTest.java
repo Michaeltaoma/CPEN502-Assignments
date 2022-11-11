@@ -15,7 +15,7 @@ class LUTImplTest {
 
     @Test
     void TEST_INITIALIZE_LUT() {
-        final LUTImpl lut = new LUTImpl(3, 3, 3, 3, 5, 0.9);
+        final LUTImpl lut = new LUTImpl(3, 3, 3, 3, 5);
 
         assertArrayEquals(lut.getQTable().shape(), new long[] {3, 3, 3, 3, 5});
     }
@@ -34,7 +34,7 @@ class LUTImplTest {
 
     @Test
     void TEST_CHOOSE_GREEDY_ACTION() {
-        final LUTImpl lut = new LUTImpl(3, 3, 3, 3, 5, 0.9);
+        final LUTImpl lut = new LUTImpl(3, 3, 3, 3, 5);
         assertTrue(lut.chooseGreedyAction(new int[] {2,2,2,2}) < 5);
     }
 }
