@@ -1,13 +1,17 @@
 package org.homework.robot;
 
+import lombok.Setter;
+import org.homework.rl.LUTImpl;
 import org.homework.robot.model.Action;
 import org.homework.robot.model.ImmutableState;
 import org.homework.robot.model.State;
 import org.homework.robot.model.StateName;
 import robocode.AdvancedRobot;
 import robocode.BattleEndedEvent;
+import robocode.DeathEvent;
 import robocode.RobocodeFileOutputStream;
 import robocode.ScannedRobotEvent;
+import robocode.WinEvent;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -15,77 +19,130 @@ import java.util.Date;
 
 import static org.homework.Util.closeOutputStream;
 
+@Setter
 public class AIRobot extends AdvancedRobot {
+    private static final double BASIC_REWARD = .5;
+    private final boolean isOnPolicy = false;
+    private double reward = .0;
     private RobocodeFileOutputStream robocodeFileOutputStream = null;
-
-    private boolean doesScanRun = false;
-    private Action currentAction = Action.AHEAD;
+    private State currentState = ImmutableState.builder().build();
+    private State prevState = this.currentState;
+    private LUTImpl lut = new LUTImpl(this.currentState);
+    private Action currentAction;
 
     @Override
     public void run() {
         this.initRobocodeFileOutputStream();
-
         while (true) {
             this.setTurnRadarLeftRadians(2 * Math.PI);
             this.scan();
+            this.currentAction = this.chooseCurrentAction();
             this.act();
+            this.updateQValue();
+            this.reward = .0;
         }
     }
 
-    /**
-     * switch mode (scan or move) when move: choose action -> move -> update Q when scan: turn
-     * Currently it just do dumb thing
-     */
+    /** Update q value */
+    public void updateQValue() {
+        this.lut.computeQValue(
+                this.prevState,
+                this.currentState,
+                this.currentAction.ordinal(),
+                this.reward,
+                this.isOnPolicy);
+    }
+
+    /** Act based on action */
     private void act() {
         this.setTurnLeft(this.currentAction.getDirection()[0]);
         this.setTurnRight(this.currentAction.getDirection()[1]);
         this.setAhead(this.currentAction.getDirection()[2]);
+        this.info(String.format("Current Action: %s", this.currentAction.name()));
         this.execute();
     }
 
-    @Override
-    public void onScannedRobot(final ScannedRobotEvent event) {
-        final State currentState = this.getCurrentState(event);
-        this.doesScanRun = !this.doesScanRun;
-        this.info(String.format("Current State: %s\n", currentState));
-        this.currentAction = this.chooseCurrentAction();
-    }
-
+    /**
+     * Get current scanned state
+     *
+     * @param event The event of scan
+     * @return State represent current
+     */
     public State getCurrentState(final ScannedRobotEvent event) {
-
         return ImmutableState.builder()
-                .currentHP(this.toHP(this.getEnergy()))
-                .distanceToEnemy(this.toDistanceToEnemy(event.getDistance()))
+                .currentHP(StateName.HP.values()[this.toCategoricalState(event.getEnergy())])
+                .currentEnemyHP(
+                        StateName.ENEMY_HP.values()[this.toCategoricalState(event.getBearing())])
+                .currentDistanceToEnemy(
+                        StateName.DISTANCE_TO_ENEMY
+                                .values()[this.toCategoricalState(event.getDistance())])
+                .currentDistanceToWall(
+                        StateName.DISTANCE_TO_WALL
+                                .values()[this.toCategoricalState(this.getDistanceRemaining())])
                 .build();
     }
 
+    /**
+     * Choose action based on current state
+     *
+     * @return Action the robot should do
+     */
     public Action chooseCurrentAction() {
-        return this.doesScanRun ? Action.AHEAD : Action.TURN_LEFT;
+        return Action.values()[this.lut.chooseAction(this.currentState)];
     }
 
+    /**
+     * Called when the enemy robot has been scanned
+     *
+     * @param event
+     */
+    @Override
+    public void onScannedRobot(final ScannedRobotEvent event) {
+        this.prevState = this.currentState;
+        this.currentState = this.getCurrentState(event);
+        this.info(String.format("Current State: %s\n", this.currentState));
+    }
+
+    /**
+     * Called when battle end
+     *
+     * @param event
+     */
     @Override
     public void onBattleEnded(final BattleEndedEvent event) {
         closeOutputStream(this.robocodeFileOutputStream);
     }
 
-    StateName.HP toHP(final double hp) {
-        if (hp < 30) {
-            return StateName.HP.LOW;
-        } else if (hp < 60) {
-            return StateName.HP.MID;
-        } else {
-            return StateName.HP.HIGH;
-        }
+    /**
+     * Call when battle win
+     *
+     * @param event
+     */
+    @Override
+    public void onWin(final WinEvent event) {
+        this.reward += 10 * BASIC_REWARD;
+        this.updateQValue();
     }
 
-    StateName.DISTANCE_TO_ENEMY toDistanceToEnemy(final double distance) {
-        if (distance < 30) {
-            return StateName.DISTANCE_TO_ENEMY.LOW;
-        } else if (distance < 60) {
-            return StateName.DISTANCE_TO_ENEMY.MID;
-        } else {
-            return StateName.DISTANCE_TO_ENEMY.HIGH;
-        }
+    /**
+     * Call when robot die
+     *
+     * @param event
+     */
+    @Override
+    public void onDeath(final DeathEvent event) {
+        this.reward -= 10 * BASIC_REWARD;
+        this.updateQValue();
+    }
+
+    /**
+     * Helper function to map numerical value to categorical value
+     *
+     * @param val numerical state value
+     * @return ordinal for the state
+     */
+    public int toCategoricalState(final double val) {
+        return Math.min(2, new Double(val).intValue() / 30);
     }
 
     /**
