@@ -35,6 +35,8 @@ dependencies {
 
     // 2. Use Guava types in your public API:
     api("com.google.guava:guava:31.1-jre")
+
+    dependencies { testImplementation "org.mockito:mockito-core:3.+" }
 }
 
 test {

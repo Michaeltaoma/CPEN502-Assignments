@@ -1,9 +1,9 @@
 package org.homework.robot.model;
 
 public enum Action {
-    TURN_LEFT(new double[] {90.0, 0.0, 0.0}),
-    TURN_RIGHT(new double[] {0.0, 90.0, 0.0}),
-    AHEAD(new double[] {0.0, 0.0, 100.0});
+    TO_LEFT(new double[] {50.0, 0.0, 50.0}),
+    TO_RIGHT(new double[] {0.0, 50.0, 50.0}),
+    AHEAD(new double[] {0.0, 0.0, 50.0});
 
     final double[] direction;
 
