@@ -8,9 +8,13 @@ import org.homework.robot.model.State;
 import org.homework.robot.model.StateName;
 import robocode.AdvancedRobot;
 import robocode.BattleEndedEvent;
+import robocode.BulletHitEvent;
+import robocode.BulletMissedEvent;
 import robocode.DeathEvent;
+import robocode.HitByBulletEvent;
 import robocode.HitRobotEvent;
 import robocode.RobocodeFileOutputStream;
+import robocode.RoundEndedEvent;
 import robocode.ScannedRobotEvent;
 import robocode.WinEvent;
 
@@ -138,6 +142,11 @@ public class AIRobot extends AdvancedRobot {
         closeOutputStream(this.robocodeFileOutputStream);
     }
 
+    @Override
+    public void onRoundEnded(final RoundEndedEvent event) {
+        closeOutputStream(this.robocodeFileOutputStream);
+    }
+
     /**
      * Call when battle win
      *
@@ -156,8 +165,37 @@ public class AIRobot extends AdvancedRobot {
      */
     @Override
     public void onHitRobot(final HitRobotEvent event) {
-        this.reward -= 4 * BASIC_REWARD;
-        this.updateQValue();
+        this.reward -= BASIC_REWARD;
+    }
+
+    /**
+     * This method is called when one of your bullets hits another main.robot
+     *
+     * @param event
+     */
+    @Override
+    public void onBulletHit(final BulletHitEvent event) {
+        this.reward += 2 * BASIC_REWARD;
+    }
+
+    /**
+     * This method is called when one of our bullets has missed.
+     *
+     * @param event
+     */
+    @Override
+    public void onBulletMissed(final BulletMissedEvent event) {
+        this.reward -= .5 * BASIC_REWARD;
+    }
+
+    /**
+     * This method is called when your main.robot is hit by a bullet.
+     *
+     * @param event
+     */
+    @Override
+    public void onHitByBullet(final HitByBulletEvent event) {
+        this.reward -= 1 * BASIC_REWARD;
     }
 
     /**
