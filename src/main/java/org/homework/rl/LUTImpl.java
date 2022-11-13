@@ -4,18 +4,17 @@ import lombok.Getter;
 import org.homework.robot.model.Action;
 import org.homework.robot.model.State;
 import org.homework.robot.model.StateName;
+import robocode.RobocodeFileOutputStream;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
-import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_ENEMY;
-import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_WALL;
-import static org.homework.robot.model.StateName.StateType.ENEMY_HP;
-import static org.homework.robot.model.StateName.StateType.MY_HP;
+import static org.homework.robot.model.StateName.StateType.*;
 
 @Getter
 public class LUTImpl implements LUTInterface {
@@ -28,6 +27,7 @@ public class LUTImpl implements LUTInterface {
     private final int distanceToWallTypes;
     private final int actionSize;
     public Map<State, double[]> qTable;
+    private Map<State, boolean[]> visited;
 
     public LUTImpl(
             final int myHPTypes,
@@ -57,6 +57,7 @@ public class LUTImpl implements LUTInterface {
     @Override
     public void initialiseLUT() {
         this.qTable = new HashMap<>();
+        this.visited = new HashMap<>();
     }
 
     @Override
@@ -160,8 +161,60 @@ public class LUTImpl implements LUTInterface {
     }
 
     @Override
-    public void save(final File argFile) {}
+    public void save(final File argFile) {
+        PrintStream saveFile = null;
+        try {
+            saveFile = new PrintStream(new RobocodeFileOutputStream(argFile));
+        } catch (IOException e) {
+            System.out.println("Could not create output stream for LUT save file.");
+        }
+
+        assert saveFile != null;
+        saveFile.println(this.qTable.size());
+        int numEntriesSaved = 0;
+        for (Map.Entry<State, double[]> entry : this.qTable.entrySet()) {
+            int[] states = entry.getKey().getIndexedStateValue();
+            double[] actionValues = entry.getValue();
+            saveFile.println(states.length);
+            for (int i = 0; i < states.length; ++i) {
+                saveFile.println(states[i]);
+            }
+            for (int i = 0; i < this.actionSize; ++i) {
+                saveFile.println(actionValues[i]);
+            }
+            numEntriesSaved++;
+
+        }
+        saveFile.close();
+        System.out.println("Number of LUT table entries saved is " + numEntriesSaved);
+    }
 
     @Override
-    public void load(final String argFileName) throws IOException {}
+    public void load(final String argFileName) throws IOException {
+//        FileInputStream inputFile = new FileInputStream(argFileName);
+//        BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputFile));
+//
+//        int maxIndexFromFile = Integer.parseInt(inputReader.readLine());
+//        if (maxIndexFromFile != this.qTable.size()) {
+//            System.out.println("MaxIndex for the file does not match LUT.");
+//            return;
+//        }
+//
+//        int numEntriesLoaded = 0;
+//        while (inputReader.ready()) {
+//            int stateSize = Integer.parseInt(inputReader.readLine());
+//            int[] stateValues = new int[stateSize];
+//            for (int i = 0; i < stateSize; ++i) {
+//                stateValues[i] = Integer.parseInt(inputReader.readLine());
+//            }
+//            State state;
+//            double[] actionValues = new double[this.actionSize];
+//            for (int i = 0; i < this.actionSize; ++i) {
+//                actionValues[i] = Double.parseDouble(inputReader.readLine());
+//            }
+//            this.qTable.put(state, actionValues);
+//        }
+//        inputReader.close();
+//        System.out.println("Number of LUT table entries loaded was " + numEntriesLoaded);
+    }
 }
