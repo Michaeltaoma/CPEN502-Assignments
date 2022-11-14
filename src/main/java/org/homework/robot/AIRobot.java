@@ -6,17 +6,7 @@ import org.homework.robot.model.Action;
 import org.homework.robot.model.ImmutableState;
 import org.homework.robot.model.State;
 import org.homework.robot.model.StateName;
-import robocode.AdvancedRobot;
-import robocode.BattleEndedEvent;
-import robocode.BulletHitEvent;
-import robocode.BulletMissedEvent;
-import robocode.DeathEvent;
-import robocode.HitByBulletEvent;
-import robocode.HitRobotEvent;
-import robocode.RobocodeFileOutputStream;
-import robocode.RoundEndedEvent;
-import robocode.ScannedRobotEvent;
-import robocode.WinEvent;
+import robocode.*;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -37,6 +27,10 @@ public class AIRobot extends AdvancedRobot {
     private LUTImpl lut = new LUTImpl(this.currentState);
     private Action currentAction;
     private double bearing = 0.0;
+
+    private int winRound = 0;
+
+    private int totalRound = 0;
 
     @Override
     public void run() {
@@ -156,6 +150,7 @@ public class AIRobot extends AdvancedRobot {
     public void onWin(final WinEvent event) {
         this.reward += 10 * BASIC_REWARD;
         this.updateQValue();
+        this.updateRound(true);
     }
 
     /**
@@ -165,6 +160,16 @@ public class AIRobot extends AdvancedRobot {
      */
     @Override
     public void onHitRobot(final HitRobotEvent event) {
+        this.reward -= BASIC_REWARD;
+    }
+
+    /**
+     * Call when robot hits wall
+     *
+     * @param event
+     */
+    @Override
+    public void onHitWall(HitWallEvent event) {
         this.reward -= BASIC_REWARD;
     }
 
@@ -207,6 +212,7 @@ public class AIRobot extends AdvancedRobot {
     public void onDeath(final DeathEvent event) {
         this.reward -= 10 * BASIC_REWARD;
         this.updateQValue();
+        this.updateRound(false);
     }
 
     /**
@@ -259,4 +265,12 @@ public class AIRobot extends AdvancedRobot {
     private String getLogFileName() {
         return String.format("robot-%d.txt", new Date().getTime());
     }
+
+    private void updateRound(boolean isWin) {
+        if (isWin) {
+            this.winRound++;
+        }
+        this.totalRound++;
+    }
+
 }
