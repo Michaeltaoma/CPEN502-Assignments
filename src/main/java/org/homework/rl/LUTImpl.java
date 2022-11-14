@@ -178,14 +178,13 @@ public class LUTImpl implements LUTInterface {
         }
 
         assert saveFile != null;
-        saveFile.println(this.qTable.size());
         int numEntriesSaved = 0;
         for (final Map.Entry<State, double[]> entry : this.qTable.entrySet()) {
             final int[] states = entry.getKey().getIndexedStateValue();
             final double[] actionValues = entry.getValue();
             saveFile.println(states.length);
-            for (int i = 0; i < states.length; ++i) {
-                saveFile.println(states[i]);
+            for (int state : states) {
+                saveFile.println(state);
             }
             for (int i = 0; i < this.actionSize; ++i) {
                 saveFile.println(actionValues[i]);
@@ -204,7 +203,6 @@ public class LUTImpl implements LUTInterface {
         final FileInputStream inputFile = new FileInputStream(argFileName);
         final BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputFile));
 
-        final int maxIndexFromFile = Integer.parseInt(inputReader.readLine());
         int numEntriesLoaded = 0;
         while (inputReader.ready()) {
             final int stateSize = Integer.parseInt(inputReader.readLine());
