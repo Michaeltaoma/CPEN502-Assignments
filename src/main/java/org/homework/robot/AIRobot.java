@@ -76,17 +76,21 @@ public class AIRobot extends AdvancedRobot {
         this.bearing = event.getBearing();
 
         return ImmutableState.builder()
-                .currentHP(StateName.HP.values()[this.toCategoricalState(event.getEnergy())])
+                .currentHP(StateName.HP.values()[this.toCategoricalState(event.getEnergy(), 30, 2)])
                 .currentEnemyHP(
-                        StateName.ENEMY_HP.values()[this.toCategoricalState(event.getBearing())])
+                        StateName.ENEMY_HP
+                                .values()[this.toCategoricalState(event.getBearing(), 30, 2)])
                 .currentDistanceToEnemy(
                         StateName.DISTANCE_TO_ENEMY
-                                .values()[this.toCategoricalState(event.getDistance())])
+                                .values()[this.toCategoricalState(event.getDistance(), 30, 2)])
                 .currentDistanceToWall(
                         StateName.DISTANCE_TO_WALL
                                 .values()[
                                 this.toCategoricalState(
-                                        this.getDistanceFromWall(this.getX(), this.getY()))])
+                                        this.getDistanceFromWall(this.getX(), this.getY()), 30, 2)])
+                .currentEnemyRobotHeading(
+                        StateName.ENEMY_ROBOT_HEADING
+                                .values()[this.toCategoricalState(event.getHeading(), 120, 2)])
                 .build();
     }
 
@@ -98,12 +102,12 @@ public class AIRobot extends AdvancedRobot {
     public State getCurrentState() {
         return ImmutableState.builder()
                 .from(this.currentState)
-                .currentHP(StateName.HP.values()[this.toCategoricalState(this.getEnergy())])
+                .currentHP(StateName.HP.values()[this.toCategoricalState(this.getEnergy(), 30, 2)])
                 .currentDistanceToWall(
                         StateName.DISTANCE_TO_WALL
                                 .values()[
                                 this.toCategoricalState(
-                                        this.getDistanceFromWall(this.getX(), this.getY()))])
+                                        this.getDistanceFromWall(this.getX(), this.getY()), 30, 2)])
                 .build();
     }
 
@@ -188,7 +192,6 @@ public class AIRobot extends AdvancedRobot {
 
     @Override
     public void onRoundEnded(final RoundEndedEvent event) {
-        this.info(String.format("Entry: %d on end", this.lut.qTable.size()));
         this.lut.save(this.getDataFile(this.getEntryFileName()));
         closeOutputStream(this.robocodeFileOutputStream);
     }
@@ -278,8 +281,8 @@ public class AIRobot extends AdvancedRobot {
      * @param val numerical state value
      * @return ordinal for the state
      */
-    public int toCategoricalState(final double val) {
-        return Math.min(2, new Double(val).intValue() / 30);
+    public int toCategoricalState(final double val, final int splitter, final int maxIndex) {
+        return Math.min(maxIndex, new Double(val).intValue() / splitter);
     }
 
     /**
@@ -299,7 +302,6 @@ public class AIRobot extends AdvancedRobot {
     private void load() {
         try {
             this.lut.load(this.getDataFile(this.getEntryFileName()));
-            this.info(String.format("qtable contains %d entries", this.lut.qTable.size()));
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }

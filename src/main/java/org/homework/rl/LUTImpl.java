@@ -25,9 +25,9 @@ import static org.homework.robot.model.StateName.StateType.MY_HP;
 
 @Getter
 public class LUTImpl implements LUTInterface {
-    private static final double learningRate = 0.1;
+    private static final double learningRate = 0.2;
     private static final double discountFactor = 0.9;
-    private static final double epsilon = 0.9;
+    private static final double epsilon = 0.75;
     private final int myHPTypes;
     private final int enemyHPTypes;
     private final int distanceToEnemyTypes;
@@ -200,12 +200,11 @@ public class LUTImpl implements LUTInterface {
     public void load(final String argFileName) throws IOException {}
 
     public void load(final File argFileName) throws IOException {
-        if (!argFileName.exists()) return;
+        if (!argFileName.exists() || argFileName.length() == 0) return;
         final FileInputStream inputFile = new FileInputStream(argFileName);
         final BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputFile));
 
         final int maxIndexFromFile = Integer.parseInt(inputReader.readLine());
-        System.out.printf("MaxIndexFromFile %d", maxIndexFromFile);
         int numEntriesLoaded = 0;
         while (inputReader.ready()) {
             final int stateSize = Integer.parseInt(inputReader.readLine());
