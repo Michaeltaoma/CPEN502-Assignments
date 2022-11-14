@@ -2,25 +2,32 @@ package org.homework.rl;
 
 import lombok.Getter;
 import org.homework.robot.model.Action;
+import org.homework.robot.model.ImmutableState;
 import org.homework.robot.model.State;
 import org.homework.robot.model.StateName;
 import robocode.RobocodeFileOutputStream;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
-import static org.homework.robot.model.StateName.StateType.*;
+import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_ENEMY;
+import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_WALL;
+import static org.homework.robot.model.StateName.StateType.ENEMY_HP;
+import static org.homework.robot.model.StateName.StateType.MY_HP;
 
 @Getter
 public class LUTImpl implements LUTInterface {
-    private static final double learningRate = 0.1;
+    private static final double learningRate = 0.2;
     private static final double discountFactor = 0.9;
-    private static final double epsilon = 0.9;
+    private static final double epsilon = 0.75;
     private final int myHPTypes;
     private final int enemyHPTypes;
     private final int distanceToEnemyTypes;
@@ -50,7 +57,6 @@ public class LUTImpl implements LUTInterface {
         this.distanceToEnemyTypes = this.getStateDimension(state, DISTANCE_TO_ENEMY);
         this.distanceToWallTypes = this.getStateDimension(state, DISTANCE_TO_WALL);
         this.actionSize = Action.values().length;
-
         this.initialiseLUT();
     }
 
@@ -106,7 +112,9 @@ public class LUTImpl implements LUTInterface {
     }
 
     void setQValue(final double qValue, final State state, final int action) {
-        this.qTable.getOrDefault(state, new double[this.actionSize])[action] = qValue;
+        final double[] value = this.qTable.getOrDefault(state, new double[this.actionSize]);
+        value[action] = qValue;
+        this.qTable.put(state, value);
     }
 
     double getQValue(final State state, final int action) {
@@ -165,16 +173,16 @@ public class LUTImpl implements LUTInterface {
         PrintStream saveFile = null;
         try {
             saveFile = new PrintStream(new RobocodeFileOutputStream(argFile));
-        } catch (IOException e) {
+        } catch (final IOException e) {
             System.out.println("Could not create output stream for LUT save file.");
         }
 
         assert saveFile != null;
         saveFile.println(this.qTable.size());
         int numEntriesSaved = 0;
-        for (Map.Entry<State, double[]> entry : this.qTable.entrySet()) {
-            int[] states = entry.getKey().getIndexedStateValue();
-            double[] actionValues = entry.getValue();
+        for (final Map.Entry<State, double[]> entry : this.qTable.entrySet()) {
+            final int[] states = entry.getKey().getIndexedStateValue();
+            final double[] actionValues = entry.getValue();
             saveFile.println(states.length);
             for (int i = 0; i < states.length; ++i) {
                 saveFile.println(states[i]);
@@ -183,38 +191,45 @@ public class LUTImpl implements LUTInterface {
                 saveFile.println(actionValues[i]);
             }
             numEntriesSaved++;
-
         }
         saveFile.close();
         System.out.println("Number of LUT table entries saved is " + numEntriesSaved);
     }
 
     @Override
-    public void load(final String argFileName) throws IOException {
-//        FileInputStream inputFile = new FileInputStream(argFileName);
-//        BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputFile));
-//
-//        int maxIndexFromFile = Integer.parseInt(inputReader.readLine());
-//        if (maxIndexFromFile != this.qTable.size()) {
-//            System.out.println("MaxIndex for the file does not match LUT.");
-//            return;
-//        }
-//
-//        int numEntriesLoaded = 0;
-//        while (inputReader.ready()) {
-//            int stateSize = Integer.parseInt(inputReader.readLine());
-//            int[] stateValues = new int[stateSize];
-//            for (int i = 0; i < stateSize; ++i) {
-//                stateValues[i] = Integer.parseInt(inputReader.readLine());
-//            }
-//            State state;
-//            double[] actionValues = new double[this.actionSize];
-//            for (int i = 0; i < this.actionSize; ++i) {
-//                actionValues[i] = Double.parseDouble(inputReader.readLine());
-//            }
-//            this.qTable.put(state, actionValues);
-//        }
-//        inputReader.close();
-//        System.out.println("Number of LUT table entries loaded was " + numEntriesLoaded);
+    public void load(final String argFileName) throws IOException {}
+
+    public void load(final File argFileName) throws IOException {
+        if (!argFileName.exists() || argFileName.length() == 0) return;
+        final FileInputStream inputFile = new FileInputStream(argFileName);
+        final BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputFile));
+
+        final int maxIndexFromFile = Integer.parseInt(inputReader.readLine());
+        int numEntriesLoaded = 0;
+        while (inputReader.ready()) {
+            final int stateSize = Integer.parseInt(inputReader.readLine());
+            final int[] stateValues = new int[stateSize];
+            for (int i = 0; i < stateSize; ++i) {
+                stateValues[i] = Integer.parseInt(inputReader.readLine());
+            }
+            final State state = this.getStateFromStateValues(stateValues);
+            final double[] actionValues = new double[this.actionSize];
+            for (int i = 0; i < this.actionSize; ++i) {
+                actionValues[i] = Double.parseDouble(inputReader.readLine());
+            }
+            this.qTable.put(state, actionValues);
+            numEntriesLoaded++;
+        }
+        inputReader.close();
+        System.out.println("Number of LUT table entries loaded was " + numEntriesLoaded);
+    }
+
+    public State getStateFromStateValues(final int[] indexedStateValue) {
+        return ImmutableState.builder()
+                .currentHP(StateName.HP.values()[indexedStateValue[0]])
+                .currentEnemyHP(StateName.ENEMY_HP.values()[indexedStateValue[1]])
+                .currentDistanceToEnemy(StateName.DISTANCE_TO_ENEMY.values()[indexedStateValue[2]])
+                .currentDistanceToWall(StateName.DISTANCE_TO_WALL.values()[indexedStateValue[3]])
+                .build();
     }
 }

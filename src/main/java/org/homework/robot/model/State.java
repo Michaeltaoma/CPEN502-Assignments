@@ -4,10 +4,12 @@ import com.google.common.collect.ImmutableMap;
 import org.immutables.value.Value;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_ENEMY;
 import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_WALL;
 import static org.homework.robot.model.StateName.StateType.ENEMY_HP;
+import static org.homework.robot.model.StateName.StateType.ENEMY_ROBOT_HEADING;
 import static org.homework.robot.model.StateName.StateType.MY_HP;
 
 @Value.Immutable
@@ -33,12 +35,18 @@ public abstract class State {
     }
 
     @Value.Default
+    public StateName.ENEMY_ROBOT_HEADING getCurrentEnemyRobotHeading() {
+        return StateName.ENEMY_ROBOT_HEADING.MID;
+    }
+
+    @Value.Default
     public int[] getIndexedStateValue() {
         return new int[] {
             this.getCurrentHP().ordinal(),
             this.getCurrentEnemyHP().ordinal(),
             this.getCurrentDistanceToEnemy().ordinal(),
-            this.getCurrentDistanceToWall().ordinal()
+            this.getCurrentDistanceToWall().ordinal(),
+            this.getCurrentEnemyRobotHeading().ordinal()
         };
     }
 
@@ -49,6 +57,7 @@ public abstract class State {
                 .put(ENEMY_HP, ENEMY_HP.getNumTypes())
                 .put(DISTANCE_TO_ENEMY, DISTANCE_TO_ENEMY.getNumTypes())
                 .put(DISTANCE_TO_WALL, DISTANCE_TO_WALL.getNumTypes())
+                .put(ENEMY_ROBOT_HEADING, ENEMY_ROBOT_HEADING.getNumTypes())
                 .build();
     }
 
@@ -68,5 +77,10 @@ public abstract class State {
         final State state = (State) obj;
 
         return Arrays.equals(this.getIndexedStateValue(), state.getIndexedStateValue());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(this.getIndexedStateValue());
     }
 }
