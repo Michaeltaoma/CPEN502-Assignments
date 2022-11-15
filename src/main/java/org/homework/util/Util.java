@@ -1,4 +1,4 @@
-package org.homework;
+package org.homework.util;
 
 import java.io.IOException;
 import java.io.OutputStream;
