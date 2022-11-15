@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import org.immutables.value.Value;
 
 import java.util.Arrays;
-import java.util.Objects;
 
 import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_ENEMY;
 import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_WALL;
@@ -40,13 +39,25 @@ public abstract class State {
     }
 
     @Value.Default
+    public int getX() {
+        return 50;
+    }
+
+    @Value.Default
+    public int getY() {
+        return 50;
+    }
+
+    @Value.Default
     public int[] getIndexedStateValue() {
         return new int[] {
             this.getCurrentHP().ordinal(),
             this.getCurrentEnemyHP().ordinal(),
             this.getCurrentDistanceToEnemy().ordinal(),
             this.getCurrentDistanceToWall().ordinal(),
-            this.getCurrentEnemyRobotHeading().ordinal()
+            this.getCurrentEnemyRobotHeading().ordinal(),
+            this.getX(),
+            this.getY()
         };
     }
 
@@ -64,8 +75,7 @@ public abstract class State {
     @Override
     public String toString() {
         return String.format(
-                "HP: %s, Distance to enemy: %s",
-                this.getCurrentHP().name(), this.getCurrentDistanceToEnemy().name());
+                "Current State Array: %s", Arrays.toString(this.getIndexedStateValue()));
     }
 
     @Override
@@ -81,6 +91,6 @@ public abstract class State {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.getIndexedStateValue());
+        return Arrays.hashCode(this.getIndexedStateValue());
     }
 }
