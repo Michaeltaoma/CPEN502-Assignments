@@ -7,28 +7,20 @@ import org.homework.robot.model.State;
 import org.homework.robot.model.StateName;
 import robocode.RobocodeFileOutputStream;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_ENEMY;
-import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_WALL;
-import static org.homework.robot.model.StateName.StateType.ENEMY_HP;
-import static org.homework.robot.model.StateName.StateType.MY_HP;
+import static org.homework.robot.model.StateName.StateType.*;
 
 @Getter
 public class LUTImpl implements LUTInterface {
     private static final double learningRate = 0.1;
     private static final double discountFactor = 0.9;
-    private static final double epsilon = 1 - 0.9;
+    private static final double epsilon = 0.9;
     private final int myHPTypes;
     private final int enemyHPTypes;
     private final int distanceToEnemyTypes;
@@ -78,10 +70,10 @@ public class LUTImpl implements LUTInterface {
      */
     public int chooseAction(final State state) {
         if (Math.random() < epsilon) {
-            // explore
-            return this.chooseRandomAction();
+            return this.chooseGreedyAction(state);
         }
-        return this.chooseGreedyAction(state);
+        // explore
+        return this.chooseRandomAction();
     }
 
     /**
