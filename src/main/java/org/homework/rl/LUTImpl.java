@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_ENEMY;
 import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_WALL;
@@ -34,7 +35,6 @@ public class LUTImpl implements LUTInterface {
     private final int distanceToWallTypes;
     private final int actionSize;
     public Map<State, double[]> qTable;
-    private Map<State, boolean[]> visited;
 
     public LUTImpl(
             final int myHPTypes,
@@ -63,7 +63,6 @@ public class LUTImpl implements LUTInterface {
     @Override
     public void initialiseLUT() {
         this.qTable = new HashMap<>();
-        this.visited = new HashMap<>();
     }
 
     @Override
@@ -95,7 +94,11 @@ public class LUTImpl implements LUTInterface {
         double curMax = -Double.MAX_VALUE;
         int curAction = -1;
         final double[] currentActionValue =
-                this.qTable.getOrDefault(state, new double[this.actionSize]);
+                this.qTable.getOrDefault(
+                        state,
+                        ThreadLocalRandom.current().doubles(this.actionSize, 0, 1).toArray());
+
+        this.qTable.put(state, currentActionValue);
 
         for (int action = 0; action < currentActionValue.length; action++) {
             if (currentActionValue[action] > curMax) {
@@ -112,13 +115,21 @@ public class LUTImpl implements LUTInterface {
     }
 
     void setQValue(final double qValue, final State state, final int action) {
-        final double[] value = this.qTable.getOrDefault(state, new double[this.actionSize]);
+        final double[] value =
+                this.qTable.getOrDefault(
+                        state,
+                        ThreadLocalRandom.current().doubles(this.actionSize, 0, 1).toArray());
         value[action] = qValue;
         this.qTable.put(state, value);
     }
 
     double getQValue(final State state, final int action) {
-        return this.qTable.getOrDefault(state, new double[this.actionSize])[action];
+        final double[] currentActionValue =
+                this.qTable.getOrDefault(
+                        state,
+                        ThreadLocalRandom.current().doubles(this.actionSize, 0, 1).toArray());
+        this.qTable.put(state, currentActionValue);
+        return currentActionValue[action];
     }
 
     /**
@@ -135,8 +146,10 @@ public class LUTImpl implements LUTInterface {
             final int prevAction,
             final double reward,
             final boolean isOnPolicy) {
+
         final double prevQValue = this.getQValue(prevDimension, prevAction);
         final double curQValue = this.getQValue(curDimension, prevAction);
+
         if (isOnPolicy) {
             // Sarsa
             this.setQValue(
@@ -179,11 +192,12 @@ public class LUTImpl implements LUTInterface {
 
         assert saveFile != null;
         int numEntriesSaved = 0;
+        saveFile.println(this.qTable.size());
         for (final Map.Entry<State, double[]> entry : this.qTable.entrySet()) {
             final int[] states = entry.getKey().getIndexedStateValue();
             final double[] actionValues = entry.getValue();
             saveFile.println(states.length);
-            for (int state : states) {
+            for (final int state : states) {
                 saveFile.println(state);
             }
             for (int i = 0; i < this.actionSize; ++i) {
@@ -203,8 +217,9 @@ public class LUTImpl implements LUTInterface {
         final FileInputStream inputFile = new FileInputStream(argFileName);
         final BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputFile));
 
-        int numEntriesLoaded = 0;
-        while (inputReader.ready()) {
+        int maxIndexFromFile = Integer.parseInt(inputReader.readLine());
+
+        while (maxIndexFromFile-- > 0) {
             final int stateSize = Integer.parseInt(inputReader.readLine());
             final int[] stateValues = new int[stateSize];
             for (int i = 0; i < stateSize; ++i) {
@@ -216,10 +231,8 @@ public class LUTImpl implements LUTInterface {
                 actionValues[i] = Double.parseDouble(inputReader.readLine());
             }
             this.qTable.put(state, actionValues);
-            numEntriesLoaded++;
         }
         inputReader.close();
-        System.out.println("Number of LUT table entries loaded was " + numEntriesLoaded);
     }
 
     public State getStateFromStateValues(final int[] indexedStateValue) {
@@ -228,6 +241,10 @@ public class LUTImpl implements LUTInterface {
                 .currentEnemyHP(StateName.ENEMY_HP.values()[indexedStateValue[1]])
                 .currentDistanceToEnemy(StateName.DISTANCE_TO_ENEMY.values()[indexedStateValue[2]])
                 .currentDistanceToWall(StateName.DISTANCE_TO_WALL.values()[indexedStateValue[3]])
+                .currentEnemyRobotHeading(
+                        StateName.ENEMY_ROBOT_HEADING.values()[indexedStateValue[4]])
+                .x(indexedStateValue[5])
+                .y(indexedStateValue[6])
                 .build();
     }
 }

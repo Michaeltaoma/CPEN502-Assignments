@@ -25,28 +25,29 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 
-import static org.homework.Util.closeOutputStream;
-
 @Setter
 public class AIRobot extends AdvancedRobot {
     private static final double BASIC_REWARD = .5;
     private final boolean isOnPolicy = false;
     private double reward = .0;
-    private RobocodeFileOutputStream robocodeFileOutputStream = null;
     private State currentState = ImmutableState.builder().build();
-    private State prevState = this.currentState;
+    private State prevState = ImmutableState.builder().from(this.currentState).build();
     private LUTImpl lut = new LUTImpl(this.currentState);
     private Action currentAction;
     private double bearing = 0.0;
     private int winRound = 0;
     private int totalRound = 0;
+    private RobocodeFileOutputStream robocodeFileOutputStream;
 
     @Override
     public void run() {
-        this.initRobocodeFileOutputStream();
+        //        this.initRobocodeFileOutputStream();
         this.load();
+        this.setAdjustGunForRobotTurn(true);
+        this.setAdjustRadarForGunTurn(true);
         while (true) {
             this.setTurnRadarLeftRadians(2 * Math.PI);
+            this.scan();
             this.currentAction = this.chooseCurrentAction();
             this.act();
             this.updateQValue();
@@ -74,40 +75,24 @@ public class AIRobot extends AdvancedRobot {
      */
     public State getCurrentState(final ScannedRobotEvent event) {
         this.bearing = event.getBearing();
-
         return ImmutableState.builder()
-                .currentHP(StateName.HP.values()[this.toCategoricalState(event.getEnergy(), 30, 2)])
-                .currentEnemyHP(
-                        StateName.ENEMY_HP
-                                .values()[this.toCategoricalState(event.getBearing(), 30, 2)])
-                .currentDistanceToEnemy(
-                        StateName.DISTANCE_TO_ENEMY
-                                .values()[this.toCategoricalState(event.getDistance(), 30, 2)])
-                .currentDistanceToWall(
-                        StateName.DISTANCE_TO_WALL
-                                .values()[
-                                this.toCategoricalState(
-                                        this.getDistanceFromWall(this.getX(), this.getY()), 30, 2)])
-                .currentEnemyRobotHeading(
-                        StateName.ENEMY_ROBOT_HEADING
-                                .values()[this.toCategoricalState(event.getHeading(), 120, 2)])
-                .build();
-    }
-
-    /**
-     * Get Current State when the enemy is not scanned
-     *
-     * @return Current State
-     */
-    public State getCurrentState() {
-        return ImmutableState.builder()
-                .from(this.currentState)
                 .currentHP(StateName.HP.values()[this.toCategoricalState(this.getEnergy(), 30, 2)])
                 .currentDistanceToWall(
                         StateName.DISTANCE_TO_WALL
                                 .values()[
                                 this.toCategoricalState(
                                         this.getDistanceFromWall(this.getX(), this.getY()), 30, 2)])
+                .x(new Double(this.getX()).intValue())
+                .y(new Double((this.getY())).intValue())
+                .currentEnemyHP(
+                        StateName.ENEMY_HP
+                                .values()[this.toCategoricalState(event.getBearing(), 30, 2)])
+                .currentDistanceToEnemy(
+                        StateName.DISTANCE_TO_ENEMY
+                                .values()[this.toCategoricalState(event.getDistance(), 30, 2)])
+                .currentEnemyRobotHeading(
+                        StateName.ENEMY_ROBOT_HEADING
+                                .values()[this.toCategoricalState(event.getHeading(), 120, 2)])
                 .build();
     }
 
@@ -151,14 +136,8 @@ public class AIRobot extends AdvancedRobot {
      * @param event event when a enemy robot is being scanned
      */
     private void updateRobotState(final ScannedRobotEvent event) {
-        this.prevState = this.currentState;
-        this.currentState = this.getCurrentState(event);
-    }
-
-    /** Update robot's current state and previous state */
-    private void updateRobotState() {
-        this.prevState = this.currentState;
-        this.currentState = this.getCurrentState();
+        this.prevState = ImmutableState.builder().from(this.currentState).build();
+        this.currentState = ImmutableState.builder().from(this.getCurrentState(event)).build();
     }
 
     private void updateRound(final boolean isWin) {
@@ -166,12 +145,6 @@ public class AIRobot extends AdvancedRobot {
             this.winRound++;
         }
         this.totalRound++;
-    }
-
-    /** Update current robot state and update q value */
-    private void updateLearning() {
-        this.updateRobotState();
-        this.updateQValue();
     }
 
     /** Called when the enemy robot has been scanned */
@@ -186,14 +159,12 @@ public class AIRobot extends AdvancedRobot {
      * @param event
      */
     @Override
-    public void onBattleEnded(final BattleEndedEvent event) {
-        closeOutputStream(this.robocodeFileOutputStream);
-    }
+    public void onBattleEnded(final BattleEndedEvent event) {}
 
     @Override
     public void onRoundEnded(final RoundEndedEvent event) {
         this.lut.save(this.getDataFile(this.getEntryFileName()));
-        closeOutputStream(this.robocodeFileOutputStream);
+        System.out.printf("Current win round: %d, Total round: %d", this.winRound, this.totalRound);
     }
 
     /**
@@ -204,7 +175,7 @@ public class AIRobot extends AdvancedRobot {
     @Override
     public void onWin(final WinEvent event) {
         this.reward += 10 * BASIC_REWARD;
-        this.updateLearning();
+        this.updateQValue();
         this.updateRound(true);
     }
 
@@ -215,8 +186,7 @@ public class AIRobot extends AdvancedRobot {
      */
     @Override
     public void onHitRobot(final HitRobotEvent event) {
-        this.reward -= BASIC_REWARD;
-        this.updateLearning();
+        this.reward -= 2 * BASIC_REWARD;
     }
 
     /**
@@ -226,8 +196,7 @@ public class AIRobot extends AdvancedRobot {
      */
     @Override
     public void onHitWall(final HitWallEvent event) {
-        this.reward -= BASIC_REWARD;
-        this.updateLearning();
+        this.reward -= 2 * BASIC_REWARD;
     }
 
     /**
@@ -238,7 +207,6 @@ public class AIRobot extends AdvancedRobot {
     @Override
     public void onBulletHit(final BulletHitEvent event) {
         this.reward += 2 * BASIC_REWARD;
-        this.updateLearning();
     }
 
     /**
@@ -248,8 +216,7 @@ public class AIRobot extends AdvancedRobot {
      */
     @Override
     public void onBulletMissed(final BulletMissedEvent event) {
-        this.reward -= 2 * BASIC_REWARD;
-        this.updateLearning();
+        this.reward -= 1 * BASIC_REWARD;
     }
 
     /**
@@ -259,8 +226,7 @@ public class AIRobot extends AdvancedRobot {
      */
     @Override
     public void onHitByBullet(final HitByBulletEvent event) {
-        this.reward -= 1 * BASIC_REWARD;
-        this.updateLearning();
+        this.reward -= 2 * BASIC_REWARD;
     }
 
     /**
@@ -271,7 +237,7 @@ public class AIRobot extends AdvancedRobot {
     @Override
     public void onDeath(final DeathEvent event) {
         this.reward -= 10 * BASIC_REWARD;
-        this.updateLearning();
+        this.updateQValue();
         this.updateRound(false);
     }
 
@@ -299,6 +265,7 @@ public class AIRobot extends AdvancedRobot {
         }
     }
 
+    /** Load previous saved log file */
     private void load() {
         try {
             this.lut.load(this.getDataFile(this.getEntryFileName()));
@@ -319,9 +286,6 @@ public class AIRobot extends AdvancedRobot {
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
-
-        this.info(
-                String.format("Successfully initialized robocode logger: %s\n", targetLogFilePath));
     }
 
     /**
