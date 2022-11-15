@@ -235,8 +235,8 @@ public class LUTImpl implements LUTInterface {
                 .currentDistanceToWall(StateName.DISTANCE_TO_WALL.values()[indexedStateValue[3]])
                 .currentEnemyRobotHeading(
                         StateName.ENEMY_ROBOT_HEADING.values()[indexedStateValue[4]])
-                .x(indexedStateValue[5])
-                .y(indexedStateValue[6])
+                .x(StateName.X.values()[indexedStateValue[5]])
+                .y(StateName.Y.values()[indexedStateValue[6]])
                 .build();
     }
 }
