@@ -41,7 +41,6 @@ public class AIRobot extends AdvancedRobot {
 
     @Override
     public void run() {
-        //        this.initRobocodeFileOutputStream();
         this.load();
         this.setAdjustGunForRobotTurn(true);
         this.setAdjustRadarForGunTurn(true);
@@ -60,7 +59,7 @@ public class AIRobot extends AdvancedRobot {
         this.setTurnLeft(this.currentAction.getDirection()[0]);
         this.setTurnRight(this.currentAction.getDirection()[1]);
         this.setAhead(this.currentAction.getDirection()[2]);
-        if (this.currentAction == Action.FIRE) {
+        if (this.currentAction.name().contains("FIRE")) {
             this.setTurnGunRight(this.getHeading() - this.getGunHeading() + this.bearing);
             this.setFire(this.currentAction.getDirection()[3]);
         }
@@ -82,8 +81,8 @@ public class AIRobot extends AdvancedRobot {
                                 .values()[
                                 this.toCategoricalState(
                                         this.getDistanceFromWall(this.getX(), this.getY()), 30, 2)])
-                .x(new Double(this.getX()).intValue())
-                .y(new Double((this.getY())).intValue())
+                .x(StateName.X.values()[this.toCategoricalState(this.getX(), 160, 4)])
+                .y(StateName.Y.values()[this.toCategoricalState(this.getY(), 120, 4)])
                 .currentEnemyHP(
                         StateName.ENEMY_HP
                                 .values()[this.toCategoricalState(event.getBearing(), 30, 2)])
@@ -304,6 +303,6 @@ public class AIRobot extends AdvancedRobot {
      * @return filename that store the weight
      */
     private String getEntryFileName() {
-        return "AIRobot-crazy-robot.txt";
+        return String.format("AIRobot-%s-robot.txt", "crazy");
     }
 }
