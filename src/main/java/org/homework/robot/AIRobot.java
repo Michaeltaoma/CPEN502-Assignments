@@ -6,6 +6,7 @@ import org.homework.robot.model.Action;
 import org.homework.robot.model.ImmutableState;
 import org.homework.robot.model.State;
 import org.homework.robot.model.StateName;
+import org.homework.util.LogFile;
 import robocode.AdvancedRobot;
 import robocode.BattleEndedEvent;
 import robocode.BulletHitEvent;
@@ -19,6 +20,7 @@ import robocode.RoundEndedEvent;
 import robocode.ScannedRobotEvent;
 import robocode.WinEvent;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -28,15 +30,18 @@ import java.util.Date;
 @Setter
 public class AIRobot extends AdvancedRobot {
     private static final double BASIC_REWARD = .5;
+    public static LogFile log = new LogFile();
+    private static int winRound = 0;
+    private static int totalRound = 0;
+    private static int rounds = 0;
     private final boolean isOnPolicy = false;
+    private boolean isImmediateReward = true;
     private double reward = .0;
     private State currentState = ImmutableState.builder().build();
     private State prevState = ImmutableState.builder().from(this.currentState).build();
     private LUTImpl lut = new LUTImpl(this.currentState);
     private Action currentAction;
     private double bearing = 0.0;
-    private int winRound = 0;
-    private int totalRound = 0;
     private RobocodeFileOutputStream robocodeFileOutputStream;
 
     @Override
@@ -139,13 +144,6 @@ public class AIRobot extends AdvancedRobot {
         this.currentState = ImmutableState.builder().from(this.getCurrentState(event)).build();
     }
 
-    private void updateRound(final boolean isWin) {
-        if (isWin) {
-            this.winRound++;
-        }
-        this.totalRound++;
-    }
-
     /** Called when the enemy robot has been scanned */
     @Override
     public void onScannedRobot(final ScannedRobotEvent event) {
@@ -163,7 +161,24 @@ public class AIRobot extends AdvancedRobot {
     @Override
     public void onRoundEnded(final RoundEndedEvent event) {
         this.lut.save(this.getDataFile(this.getEntryFileName()));
-        System.out.printf("Current win round: %d, Total round: %d", this.winRound, this.totalRound);
+        totalRound++;
+        this.logWinStatue(100);
+    }
+
+    void logWinStatue(final int round) {
+        if ((totalRound % round == 0) && (totalRound != 0)) {
+            final double winPercentage = (double) winRound / round;
+            final File folderDst1 = this.getDataFile(this.getWinRoundLogFileName());
+            log.writeToFile(folderDst1, winPercentage, ++rounds);
+            winRound = 0;
+        }
+    }
+
+    private String getWinRoundLogFileName() {
+        return String.format(
+                "win-round-%s-%s",
+                this.isOnPolicy ? "OnPolicy" : "OffPolicy",
+                this.isImmediateReward ? "ImmediateReward" : "TerminalReward");
     }
 
     /**
@@ -173,9 +188,9 @@ public class AIRobot extends AdvancedRobot {
      */
     @Override
     public void onWin(final WinEvent event) {
-        this.reward += 10 * BASIC_REWARD;
+        this.reward += this.isImmediateReward ? 10 * BASIC_REWARD : 20 * BASIC_REWARD;
         this.updateQValue();
-        this.updateRound(true);
+        winRound++;
     }
 
     /**
@@ -185,7 +200,7 @@ public class AIRobot extends AdvancedRobot {
      */
     @Override
     public void onHitRobot(final HitRobotEvent event) {
-        this.reward -= 2 * BASIC_REWARD;
+        this.reward -= this.isImmediateReward ? 2 * BASIC_REWARD : 0;
     }
 
     /**
@@ -195,7 +210,7 @@ public class AIRobot extends AdvancedRobot {
      */
     @Override
     public void onHitWall(final HitWallEvent event) {
-        this.reward -= 2 * BASIC_REWARD;
+        this.reward -= this.isImmediateReward ? 2 * BASIC_REWARD : 0;
     }
 
     /**
@@ -205,7 +220,7 @@ public class AIRobot extends AdvancedRobot {
      */
     @Override
     public void onBulletHit(final BulletHitEvent event) {
-        this.reward += 2 * BASIC_REWARD;
+        this.reward += this.isImmediateReward ? 2 * BASIC_REWARD : 0;
     }
 
     /**
@@ -215,7 +230,7 @@ public class AIRobot extends AdvancedRobot {
      */
     @Override
     public void onBulletMissed(final BulletMissedEvent event) {
-        this.reward -= 1 * BASIC_REWARD;
+        this.reward -= this.isImmediateReward ? 1 * BASIC_REWARD : 0;
     }
 
     /**
@@ -225,7 +240,7 @@ public class AIRobot extends AdvancedRobot {
      */
     @Override
     public void onHitByBullet(final HitByBulletEvent event) {
-        this.reward -= 2 * BASIC_REWARD;
+        this.reward -= this.isImmediateReward ? 2 * BASIC_REWARD : 0;
     }
 
     /**
@@ -235,9 +250,8 @@ public class AIRobot extends AdvancedRobot {
      */
     @Override
     public void onDeath(final DeathEvent event) {
-        this.reward -= 10 * BASIC_REWARD;
+        this.reward -= this.isImmediateReward ? 10 * BASIC_REWARD : 20 * BASIC_REWARD;
         this.updateQValue();
-        this.updateRound(false);
     }
 
     /**
