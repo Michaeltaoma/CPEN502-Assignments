@@ -39,13 +39,13 @@ public abstract class State {
     }
 
     @Value.Default
-    public int getX() {
-        return 50;
+    public StateName.X getX() {
+        return StateName.X.MID;
     }
 
     @Value.Default
-    public int getY() {
-        return 50;
+    public StateName.Y getY() {
+        return StateName.Y.MID;
     }
 
     @Value.Default
@@ -56,8 +56,8 @@ public abstract class State {
             this.getCurrentDistanceToEnemy().ordinal(),
             this.getCurrentDistanceToWall().ordinal(),
             this.getCurrentEnemyRobotHeading().ordinal(),
-            this.getX(),
-            this.getY()
+            this.getX().ordinal(),
+            this.getY().ordinal()
         };
     }
 
