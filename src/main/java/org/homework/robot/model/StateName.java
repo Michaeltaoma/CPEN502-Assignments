@@ -45,7 +45,9 @@ public class StateName {
 
     public enum ENEMY_ROBOT_HEADING {
         LOW,
+        MID_LOW,
         MID,
+        MID_HIGH,
         HIGH
     }
 

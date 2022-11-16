@@ -34,19 +34,19 @@ public class AIRobot extends AdvancedRobot {
     private static int winRound = 0;
     private static int totalRound = 0;
     private static int rounds = 0;
+    private static State currentState = ImmutableState.builder().build();
+    private static LUTImpl lut = new LUTImpl(currentState);
+    private static State prevState = ImmutableState.builder().from(currentState).build();
     private final boolean isOnPolicy = false;
     private boolean isImmediateReward = true;
     private double reward = .0;
-    private State currentState = ImmutableState.builder().build();
-    private State prevState = ImmutableState.builder().from(this.currentState).build();
-    private LUTImpl lut = new LUTImpl(this.currentState);
     private Action currentAction;
     private double bearing = 0.0;
     private RobocodeFileOutputStream robocodeFileOutputStream;
 
     @Override
     public void run() {
-        this.load();
+        //        this.load();
         this.setAdjustGunForRobotTurn(true);
         this.setAdjustRadarForGunTurn(true);
         while (true) {
@@ -96,7 +96,7 @@ public class AIRobot extends AdvancedRobot {
                                 .values()[this.toCategoricalState(event.getDistance(), 30, 2)])
                 .currentEnemyRobotHeading(
                         StateName.ENEMY_ROBOT_HEADING
-                                .values()[this.toCategoricalState(event.getHeading(), 120, 2)])
+                                .values()[this.toCategoricalState(event.getHeading(), 72, 4)])
                 .build();
     }
 
@@ -176,7 +176,7 @@ public class AIRobot extends AdvancedRobot {
 
     private String getWinRoundLogFileName() {
         return String.format(
-                "win-round-%s-%s",
+                "win-round-%s-%s.log",
                 this.isOnPolicy ? "OnPolicy" : "OffPolicy",
                 this.isImmediateReward ? "ImmediateReward" : "TerminalReward");
     }
