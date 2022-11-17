@@ -45,4 +45,16 @@ class LUTImplTest {
 
         System.out.println(state);
     }
+
+    @Test
+    void see_if_q_table_stores() {
+        final LUTImpl lut = new LUTImpl(ImmutableState.builder().build());
+
+        final State state2 = ImmutableState.builder().currentHP(StateName.HP.HIGH).build();
+        final State state3 = ImmutableState.builder().currentHP(StateName.HP.HIGH).build();
+
+        lut.qTable.put(state2, new double[lut.getActionSize()]);
+
+        assertTrue(lut.qTable.containsKey(state3));
+    }
 }

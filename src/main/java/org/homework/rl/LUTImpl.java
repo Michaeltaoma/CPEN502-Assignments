@@ -7,14 +7,21 @@ import org.homework.robot.model.State;
 import org.homework.robot.model.StateName;
 import robocode.RobocodeFileOutputStream;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
 
-import static org.homework.robot.model.StateName.StateType.*;
+import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_ENEMY;
+import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_WALL;
+import static org.homework.robot.model.StateName.StateType.ENEMY_HP;
+import static org.homework.robot.model.StateName.StateType.MY_HP;
 
 @Getter
 public class LUTImpl implements LUTInterface {
@@ -84,10 +91,9 @@ public class LUTImpl implements LUTInterface {
     int chooseGreedyAction(final State state) {
         double curMax = -Double.MAX_VALUE;
         int curAction = -1;
+
         final double[] currentActionValue =
-                this.qTable.getOrDefault(
-                        state,
-                        ThreadLocalRandom.current().doubles(this.actionSize, 0, 1).toArray());
+                this.qTable.getOrDefault(state, new double[this.actionSize]);
 
         this.qTable.put(state, currentActionValue);
 
@@ -106,19 +112,14 @@ public class LUTImpl implements LUTInterface {
     }
 
     void setQValue(final double qValue, final State state, final int action) {
-        final double[] value =
-                this.qTable.getOrDefault(
-                        state,
-                        ThreadLocalRandom.current().doubles(this.actionSize, 0, 1).toArray());
+        final double[] value = this.qTable.getOrDefault(state, new double[this.actionSize]);
         value[action] = qValue;
         this.qTable.put(state, value);
     }
 
     double getQValue(final State state, final int action) {
         final double[] currentActionValue =
-                this.qTable.getOrDefault(
-                        state,
-                        ThreadLocalRandom.current().doubles(this.actionSize, 0, 1).toArray());
+                this.qTable.getOrDefault(state, new double[this.actionSize]);
         this.qTable.put(state, currentActionValue);
         return currentActionValue[action];
     }
