@@ -27,7 +27,7 @@ import static org.homework.robot.model.StateName.StateType.MY_HP;
 public class LUTImpl implements LUTInterface {
     private static final double learningRate = 0.1;
     private static final double discountFactor = 0.9;
-    private static final double epsilon = 0.9;
+    private static final double epsilon = 0.1;
     private final int myHPTypes;
     private final int enemyHPTypes;
     private final int distanceToEnemyTypes;
@@ -77,10 +77,9 @@ public class LUTImpl implements LUTInterface {
      */
     public int chooseAction(final State state) {
         if (Math.random() < epsilon) {
-            return this.chooseGreedyAction(state);
+            return this.chooseRandomAction();
         }
-        // explore
-        return this.chooseRandomAction();
+        return this.chooseGreedyAction(state);
     }
 
     /**

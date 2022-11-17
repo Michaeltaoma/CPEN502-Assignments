@@ -85,8 +85,8 @@ public class AIRobot extends AdvancedRobot {
                                 .values()[
                                 this.toCategoricalState(
                                         this.getDistanceFromWall(this.getX(), this.getY()), 30, 2)])
-                .x(StateName.X.values()[this.toCategoricalState(this.getX(), 160, 4)])
-                .y(StateName.Y.values()[this.toCategoricalState(this.getY(), 120, 4)])
+                .x(StateName.X.values()[this.toCategoricalState(this.getX(), 265, 2)])
+                .y(StateName.Y.values()[this.toCategoricalState(this.getY(), 200, 2)])
                 .currentEnemyHP(
                         StateName.ENEMY_HP
                                 .values()[this.toCategoricalState(event.getBearing(), 30, 2)])
