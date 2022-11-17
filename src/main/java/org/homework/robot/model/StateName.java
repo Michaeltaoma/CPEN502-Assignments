@@ -51,17 +51,13 @@ public class StateName {
 
     public enum X {
         LOW,
-        MID_LOW,
         MID,
-        MID_HIGH,
         HIGH
     }
 
     public enum Y {
         LOW,
-        MID_LOW,
         MID,
-        MID_HIGH,
         HIGH
     }
 }
