@@ -46,7 +46,6 @@ public class AIRobot extends AdvancedRobot {
 
     @Override
     public void run() {
-        //        this.load();
         this.setAdjustGunForRobotTurn(true);
         this.setAdjustRadarForGunTurn(true);
         while (true) {
@@ -111,7 +110,6 @@ public class AIRobot extends AdvancedRobot {
         final double width = this.getBattleFieldWidth();
         final double height = this.getBattleFieldHeight();
         final double disb = height - y1, disl = x1, disr = width - x1;
-
         return Collections.max(Arrays.asList(y1, disb, disl, disr));
     }
 
@@ -121,14 +119,14 @@ public class AIRobot extends AdvancedRobot {
      * @return Action the robot should do
      */
     public Action chooseCurrentAction() {
-        return Action.values()[this.lut.chooseAction(this.currentState)];
+        return Action.values()[lut.chooseAction(currentState)];
     }
 
     /** Update q value */
     public void updateQValue() {
-        this.lut.computeQValue(
-                this.prevState,
-                this.currentState,
+        lut.computeQValue(
+                prevState,
+                currentState,
                 this.currentAction.ordinal(),
                 this.reward,
                 this.isOnPolicy);
@@ -140,8 +138,8 @@ public class AIRobot extends AdvancedRobot {
      * @param event event when a enemy robot is being scanned
      */
     private void updateRobotState(final ScannedRobotEvent event) {
-        this.prevState = ImmutableState.builder().from(this.currentState).build();
-        this.currentState = ImmutableState.builder().from(this.getCurrentState(event)).build();
+        prevState = ImmutableState.builder().from(currentState).build();
+        currentState = ImmutableState.builder().from(this.getCurrentState(event)).build();
     }
 
     /** Called when the enemy robot has been scanned */
@@ -160,7 +158,7 @@ public class AIRobot extends AdvancedRobot {
 
     @Override
     public void onRoundEnded(final RoundEndedEvent event) {
-        this.lut.save(this.getDataFile(this.getEntryFileName()));
+        lut.save(this.getDataFile(this.getEntryFileName()));
         totalRound++;
         this.logWinStatue(100);
     }
@@ -172,13 +170,6 @@ public class AIRobot extends AdvancedRobot {
             log.writeToFile(folderDst1, winPercentage, ++rounds);
             winRound = 0;
         }
-    }
-
-    private String getWinRoundLogFileName() {
-        return String.format(
-                "win-round-%s-%s.log",
-                this.isOnPolicy ? "OnPolicy" : "OffPolicy",
-                this.isImmediateReward ? "ImmediateReward" : "TerminalReward");
     }
 
     /**
@@ -281,7 +272,7 @@ public class AIRobot extends AdvancedRobot {
     /** Load previous saved log file */
     private void load() {
         try {
-            this.lut.load(this.getDataFile(this.getEntryFileName()));
+            lut.load(this.getDataFile(this.getEntryFileName()));
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
@@ -318,5 +309,17 @@ public class AIRobot extends AdvancedRobot {
      */
     private String getEntryFileName() {
         return String.format("AIRobot-%s-robot.txt", "crazy");
+    }
+
+    /**
+     * Return name of the file that stores win status
+     *
+     * @return filename for the log file
+     */
+    private String getWinRoundLogFileName() {
+        return String.format(
+                "win-round-%s-%s-0.3.log",
+                this.isOnPolicy ? "OnPolicy" : "OffPolicy",
+                this.isImmediateReward ? "ImmediateReward" : "TerminalReward");
     }
 }

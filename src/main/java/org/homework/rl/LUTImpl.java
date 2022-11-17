@@ -13,7 +13,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -28,7 +27,7 @@ import static org.homework.robot.model.StateName.StateType.MY_HP;
 public class LUTImpl implements LUTInterface {
     private static final double learningRate = 0.1;
     private static final double discountFactor = 0.9;
-    private static final double epsilon = 1 - 0.9;
+    private static final double epsilon = 1 - 0.7;
     private final int myHPTypes;
     private final int enemyHPTypes;
     private final int distanceToEnemyTypes;
@@ -94,16 +93,6 @@ public class LUTImpl implements LUTInterface {
         double curMax = -Double.MAX_VALUE;
         int curAction = -1;
 
-        //        System.out.println("For choose action\n");
-        //        System.out.println(this.printQtable());
-        //        System.out.println(this.assertIfStateExist(state));
-
-        //        final double[] currentActionValue =
-        //                this.qTable.getOrDefault(
-        //                        state,
-        //                        ThreadLocalRandom.current().doubles(this.actionSize, 0,
-        // 0).toArray());
-
         final double[] currentActionValue =
                 this.qTable.getOrDefault(state, new double[this.actionSize]);
 
@@ -124,30 +113,12 @@ public class LUTImpl implements LUTInterface {
     }
 
     void setQValue(final double qValue, final State state, final int action) {
-        //        System.out.println("For setting q value\n");
-        //        System.out.println(this.printQtable());
-        //        System.out.println(this.assertIfStateExist(state));
-        //        System.out.printf("New q: %f", qValue);
-        //        final double[] value =
-        //                this.qTable.getOrDefault(
-        //                        state,
-        //                        ThreadLocalRandom.current().doubles(this.actionSize, 0,
-        // 0).toArray());
         final double[] value = this.qTable.getOrDefault(state, new double[this.actionSize]);
         value[action] = qValue;
         this.qTable.put(state, value);
-        //        System.out.printf("After setting table: %s", this.printQtable());
     }
 
     double getQValue(final State state, final int action) {
-        //        System.out.println("For getting q value\n");
-        //        System.out.println(this.printQtable());
-        //        System.out.println(this.assertIfStateExist(state));
-        //        final double[] currentActionValue =
-        //                this.qTable.getOrDefault(
-        //                        state,
-        //                        ThreadLocalRandom.current().doubles(this.actionSize, 0,
-        // 0).toArray());
         final double[] currentActionValue =
                 this.qTable.getOrDefault(state, new double[this.actionSize]);
         this.qTable.put(state, currentActionValue);
@@ -241,8 +212,6 @@ public class LUTImpl implements LUTInterface {
 
         int maxIndexFromFile = Integer.parseInt(inputReader.readLine());
 
-        //        System.out.printf("Should load: %d \n", maxIndexFromFile);
-
         while (maxIndexFromFile-- > 0) {
             final int stateSize = Integer.parseInt(inputReader.readLine());
             final int[] stateValues = new int[stateSize];
@@ -257,8 +226,6 @@ public class LUTImpl implements LUTInterface {
             this.qTable.put(state, actionValues);
         }
         inputReader.close();
-
-        //        System.out.printf("Actually loads: %d \n", this.qTable.size());
     }
 
     public State getStateFromStateValues(final int[] indexedStateValue) {
@@ -272,24 +239,5 @@ public class LUTImpl implements LUTInterface {
                 .x(StateName.X.values()[indexedStateValue[5]])
                 .y(StateName.Y.values()[indexedStateValue[6]])
                 .build();
-    }
-
-    public String assertIfStateExist(final State state) {
-        return (this.qTable.containsKey(state)
-                        ? String.format("%s exist", state)
-                        : String.format("%s not exist", state))
-                + "\n";
-    }
-
-    public String printQtable() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("Current Map contains: \n");
-        for (final Map.Entry<State, double[]> entry : this.qTable.entrySet()) {
-            sb.append(
-                    String.format(
-                            "%s, values: %s \n",
-                            entry.getKey(), Arrays.toString(entry.getValue())));
-        }
-        return sb.toString();
     }
 }
