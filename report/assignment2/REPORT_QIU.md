@@ -7,6 +7,12 @@ Xuechun Qiu, 55766737
 Tao Ma, 13432885
 
 
+## Part 1
+
+As for part 1, your submission should be a brief document clearly showing the graphs requested about. Please number your
+graphs as above and also include in your report an appendix section containing your source code.
+
+
 ## Part 2
 a) Draw a graph of a parameter that reflects a measure of progress of learning and comment on the convergence of learning of your robot.
 
@@ -38,7 +44,209 @@ With larger epsilon, win rate will be lower. When epsilon=1.0, the robot will ta
 
 ## Appendix
 
-### `org.homework.rl.LUTImpl`
+###  org.homework.robot.model.Action
+
+```java
+package org.homework.robot.model;
+
+public enum Action {
+    AHEAD_LEFT(new double[] {50.0, 0.0, 50.0, 0.0}),
+    AHEAD_RIGHT(new double[] {0.0, 50.0, 50.0, 0.0}),
+    BACK_LEFT(new double[] {50.0, 0.0, -50.0, 0.0}),
+    BACK_RIGHT(new double[] {0.0, 50.0, -50.0, 0.0}),
+    AHEAD(new double[] {0.0, 0.0, 50.0, 0.0}),
+    BACK(new double[] {0.0, 0.0, -50.0, 0.0}),
+    HEAVY_FIRE(new double[] {0.0, 0.0, 0.0, 3.0}),
+    LIGHT_FIRE(new double[] {0.0, 0.0, 0.0, 1.0});
+
+    final double[] direction;
+
+    Action(final double[] direction) {
+        this.direction = direction;
+    }
+
+    public double[] getDirection() {
+        return this.direction;
+    }
+}
+```
+
+### org.homework.robot.model.State
+
+```java
+package org.homework.robot.model;
+
+import com.google.common.collect.ImmutableMap;
+import org.immutables.value.Value;
+
+import java.util.Arrays;
+
+import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_ENEMY;
+import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_WALL;
+import static org.homework.robot.model.StateName.StateType.ENEMY_HP;
+import static org.homework.robot.model.StateName.StateType.ENEMY_ROBOT_HEADING;
+import static org.homework.robot.model.StateName.StateType.MY_HP;
+
+@Value.Immutable
+public abstract class State {
+    @Value.Default
+    public StateName.HP getCurrentHP() {
+        return StateName.HP.MID;
+    }
+
+    @Value.Default
+    public StateName.ENEMY_HP getCurrentEnemyHP() {
+        return StateName.ENEMY_HP.MID;
+    }
+
+    @Value.Default
+    public StateName.DISTANCE_TO_ENEMY getCurrentDistanceToEnemy() {
+        return StateName.DISTANCE_TO_ENEMY.MID;
+    }
+
+    @Value.Default
+    public StateName.DISTANCE_TO_WALL getCurrentDistanceToWall() {
+        return StateName.DISTANCE_TO_WALL.MID;
+    }
+
+    @Value.Default
+    public StateName.ENEMY_ROBOT_HEADING getCurrentEnemyRobotHeading() {
+        return StateName.ENEMY_ROBOT_HEADING.MID;
+    }
+
+    @Value.Default
+    public StateName.X getX() {
+        return StateName.X.MID;
+    }
+
+    @Value.Default
+    public StateName.Y getY() {
+        return StateName.Y.MID;
+    }
+
+    @Value.Default
+    public int[] getIndexedStateValue() {
+        return new int[] {
+            this.getCurrentHP().ordinal(),
+            this.getCurrentEnemyHP().ordinal(),
+            this.getCurrentDistanceToEnemy().ordinal(),
+            this.getCurrentDistanceToWall().ordinal(),
+            this.getCurrentEnemyRobotHeading().ordinal(),
+            this.getX().ordinal(),
+            this.getY().ordinal()
+        };
+    }
+
+    @Value.Default
+    public ImmutableMap<StateName.StateType, Integer> getStateToDimensionMap() {
+        return ImmutableMap.<StateName.StateType, Integer>builder()
+                .put(MY_HP, MY_HP.getNumTypes())
+                .put(ENEMY_HP, ENEMY_HP.getNumTypes())
+                .put(DISTANCE_TO_ENEMY, DISTANCE_TO_ENEMY.getNumTypes())
+                .put(DISTANCE_TO_WALL, DISTANCE_TO_WALL.getNumTypes())
+                .put(ENEMY_ROBOT_HEADING, ENEMY_ROBOT_HEADING.getNumTypes())
+                .build();
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "Current State Array: %s", Arrays.toString(this.getIndexedStateValue()));
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (obj == this) return true;
+
+        if (!(obj instanceof State)) return false;
+
+        final State state = (State) obj;
+
+        return Arrays.equals(this.getIndexedStateValue(), state.getIndexedStateValue());
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(this.getIndexedStateValue());
+    }
+}
+```
+
+### org.homework.robot.model.StateName
+
+```java
+package org.homework.robot.model;
+
+public class StateName {
+    public enum StateType {
+        MY_HP(3),
+        ENEMY_HP(3),
+        DISTANCE_TO_ENEMY(3),
+        DISTANCE_TO_WALL(3),
+        ENEMY_ROBOT_HEADING(3);
+
+        final int numTypes;
+
+        StateType(final int _numTypes) {
+            this.numTypes = _numTypes;
+        }
+
+        public int getNumTypes() {
+            return this.numTypes;
+        }
+    }
+
+    public enum HP {
+        LOW,
+        MID,
+        HIGH
+    }
+
+    public enum ENEMY_HP {
+        LOW,
+        MID,
+        HIGH
+    }
+
+    public enum DISTANCE_TO_ENEMY {
+        LOW,
+        MID,
+        HIGH
+    }
+
+    public enum DISTANCE_TO_WALL {
+        LOW,
+        MID,
+        HIGH
+    }
+
+    public enum ENEMY_ROBOT_HEADING {
+        LOW,
+        MID_LOW,
+        MID,
+        MID_HIGH,
+        HIGH
+    }
+
+    public enum X {
+        LOW,
+        MID_LOW,
+        MID,
+        MID_HIGH,
+        HIGH
+    }
+
+    public enum Y {
+        LOW,
+        MID_LOW,
+        MID,
+        MID_HIGH,
+        HIGH
+    }
+}
+```
+
+### org.homework.rl.LUTImpl
 
 ```java
 package org.homework.rl;
@@ -56,7 +264,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -71,7 +278,7 @@ import static org.homework.robot.model.StateName.StateType.MY_HP;
 public class LUTImpl implements LUTInterface {
     private static final double learningRate = 0.1;
     private static final double discountFactor = 0.9;
-    private static final double epsilon = 1.0;
+    private static final double epsilon = 1 - 0.7;
     private final int myHPTypes;
     private final int enemyHPTypes;
     private final int distanceToEnemyTypes;
@@ -137,16 +344,6 @@ public class LUTImpl implements LUTInterface {
         double curMax = -Double.MAX_VALUE;
         int curAction = -1;
 
-        //        System.out.println("For choose action\n");
-        //        System.out.println(this.printQtable());
-        //        System.out.println(this.assertIfStateExist(state));
-
-        //        final double[] currentActionValue =
-        //                this.qTable.getOrDefault(
-        //                        state,
-        //                        ThreadLocalRandom.current().doubles(this.actionSize, 0,
-        // 0).toArray());
-
         final double[] currentActionValue =
                 this.qTable.getOrDefault(state, new double[this.actionSize]);
 
@@ -167,30 +364,12 @@ public class LUTImpl implements LUTInterface {
     }
 
     void setQValue(final double qValue, final State state, final int action) {
-        //        System.out.println("For setting q value\n");
-        //        System.out.println(this.printQtable());
-        //        System.out.println(this.assertIfStateExist(state));
-        //        System.out.printf("New q: %f", qValue);
-        //        final double[] value =
-        //                this.qTable.getOrDefault(
-        //                        state,
-        //                        ThreadLocalRandom.current().doubles(this.actionSize, 0,
-        // 0).toArray());
         final double[] value = this.qTable.getOrDefault(state, new double[this.actionSize]);
         value[action] = qValue;
         this.qTable.put(state, value);
-        //        System.out.printf("After setting table: %s", this.printQtable());
     }
 
     double getQValue(final State state, final int action) {
-        //        System.out.println("For getting q value\n");
-        //        System.out.println(this.printQtable());
-        //        System.out.println(this.assertIfStateExist(state));
-        //        final double[] currentActionValue =
-        //                this.qTable.getOrDefault(
-        //                        state,
-        //                        ThreadLocalRandom.current().doubles(this.actionSize, 0,
-        // 0).toArray());
         final double[] currentActionValue =
                 this.qTable.getOrDefault(state, new double[this.actionSize]);
         this.qTable.put(state, currentActionValue);
@@ -284,8 +463,6 @@ public class LUTImpl implements LUTInterface {
 
         int maxIndexFromFile = Integer.parseInt(inputReader.readLine());
 
-        //        System.out.printf("Should load: %d \n", maxIndexFromFile);
-
         while (maxIndexFromFile-- > 0) {
             final int stateSize = Integer.parseInt(inputReader.readLine());
             final int[] stateValues = new int[stateSize];
@@ -300,8 +477,6 @@ public class LUTImpl implements LUTInterface {
             this.qTable.put(state, actionValues);
         }
         inputReader.close();
-
-        //        System.out.printf("Actually loads: %d \n", this.qTable.size());
     }
 
     public State getStateFromStateValues(final int[] indexedStateValue) {
@@ -316,30 +491,10 @@ public class LUTImpl implements LUTInterface {
                 .y(StateName.Y.values()[indexedStateValue[6]])
                 .build();
     }
-
-    public String assertIfStateExist(final State state) {
-        return (this.qTable.containsKey(state)
-                        ? String.format("%s exist", state)
-                        : String.format("%s not exist", state))
-                + "\n";
-    }
-
-    public String printQtable() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("Current Map contains: \n");
-        for (final Map.Entry<State, double[]> entry : this.qTable.entrySet()) {
-            sb.append(
-                    String.format(
-                            "%s, values: %s \n",
-                            entry.getKey(), Arrays.toString(entry.getValue())));
-        }
-        return sb.toString();
-    }
 }
 ```
 
-
-### `org.homework.robot.AIRobot`
+### org.homework.robot.AIRobot
 
 ```java
 package org.homework.robot;
@@ -390,7 +545,6 @@ public class AIRobot extends AdvancedRobot {
 
     @Override
     public void run() {
-        //        this.load();
         this.setAdjustGunForRobotTurn(true);
         this.setAdjustRadarForGunTurn(true);
         while (true) {
@@ -455,7 +609,6 @@ public class AIRobot extends AdvancedRobot {
         final double width = this.getBattleFieldWidth();
         final double height = this.getBattleFieldHeight();
         final double disb = height - y1, disl = x1, disr = width - x1;
-
         return Collections.max(Arrays.asList(y1, disb, disl, disr));
     }
 
@@ -465,14 +618,14 @@ public class AIRobot extends AdvancedRobot {
      * @return Action the robot should do
      */
     public Action chooseCurrentAction() {
-        return Action.values()[this.lut.chooseAction(this.currentState)];
+        return Action.values()[lut.chooseAction(currentState)];
     }
 
     /** Update q value */
     public void updateQValue() {
-        this.lut.computeQValue(
-                this.prevState,
-                this.currentState,
+        lut.computeQValue(
+                prevState,
+                currentState,
                 this.currentAction.ordinal(),
                 this.reward,
                 this.isOnPolicy);
@@ -484,8 +637,8 @@ public class AIRobot extends AdvancedRobot {
      * @param event event when a enemy robot is being scanned
      */
     private void updateRobotState(final ScannedRobotEvent event) {
-        this.prevState = ImmutableState.builder().from(this.currentState).build();
-        this.currentState = ImmutableState.builder().from(this.getCurrentState(event)).build();
+        prevState = ImmutableState.builder().from(currentState).build();
+        currentState = ImmutableState.builder().from(this.getCurrentState(event)).build();
     }
 
     /** Called when the enemy robot has been scanned */
@@ -504,7 +657,7 @@ public class AIRobot extends AdvancedRobot {
 
     @Override
     public void onRoundEnded(final RoundEndedEvent event) {
-        this.lut.save(this.getDataFile(this.getEntryFileName()));
+        lut.save(this.getDataFile(this.getEntryFileName()));
         totalRound++;
         this.logWinStatue(100);
     }
@@ -516,13 +669,6 @@ public class AIRobot extends AdvancedRobot {
             log.writeToFile(folderDst1, winPercentage, ++rounds);
             winRound = 0;
         }
-    }
-
-    private String getWinRoundLogFileName() {
-        return String.format(
-                "win-round-%s-%s.log",
-                this.isOnPolicy ? "OnPolicy" : "OffPolicy",
-                this.isImmediateReward ? "ImmediateReward" : "TerminalReward");
     }
 
     /**
@@ -625,7 +771,7 @@ public class AIRobot extends AdvancedRobot {
     /** Load previous saved log file */
     private void load() {
         try {
-            this.lut.load(this.getDataFile(this.getEntryFileName()));
+            lut.load(this.getDataFile(this.getEntryFileName()));
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
@@ -663,119 +809,17 @@ public class AIRobot extends AdvancedRobot {
     private String getEntryFileName() {
         return String.format("AIRobot-%s-robot.txt", "crazy");
     }
-}
 
-```
-
-### `org.homework.robot.model.State`
-```java
-package org.homework.robot.model;
-
-import com.google.common.collect.ImmutableMap;
-import org.immutables.value.Value;
-
-import java.util.Arrays;
-
-import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_ENEMY;
-import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_WALL;
-import static org.homework.robot.model.StateName.StateType.ENEMY_HP;
-import static org.homework.robot.model.StateName.StateType.ENEMY_ROBOT_HEADING;
-import static org.homework.robot.model.StateName.StateType.MY_HP;
-
-@Value.Immutable
-public abstract class State {
-    @Value.Default
-    public StateName.HP getCurrentHP() {
-        return StateName.HP.MID;
-    }
-
-    @Value.Default
-    public StateName.ENEMY_HP getCurrentEnemyHP() {
-        return StateName.ENEMY_HP.MID;
-    }
-
-    @Value.Default
-    public StateName.DISTANCE_TO_ENEMY getCurrentDistanceToEnemy() {
-        return StateName.DISTANCE_TO_ENEMY.MID;
-    }
-
-    @Value.Default
-    public StateName.DISTANCE_TO_WALL getCurrentDistanceToWall() {
-        return StateName.DISTANCE_TO_WALL.MID;
-    }
-
-    @Value.Default
-    public StateName.ENEMY_ROBOT_HEADING getCurrentEnemyRobotHeading() {
-        return StateName.ENEMY_ROBOT_HEADING.MID;
-    }
-
-    @Value.Default
-    public StateName.X getX() {
-        return StateName.X.MID;
-    }
-
-    @Value.Default
-    public StateName.Y getY() {
-        return StateName.Y.MID;
-    }
-
-    @Value.Default
-    public int[] getIndexedStateValue() {
-        return new int[] {
-            this.getCurrentHP().ordinal(),
-            this.getCurrentEnemyHP().ordinal(),
-            this.getCurrentDistanceToEnemy().ordinal(),
-            this.getCurrentDistanceToWall().ordinal(),
-            this.getCurrentEnemyRobotHeading().ordinal(),
-            this.getX().ordinal(),
-            this.getY().ordinal()
-        };
-    }
-
-    @Value.Default
-    public ImmutableMap<StateName.StateType, Integer> getStateToDimensionMap() {
-        return ImmutableMap.<StateName.StateType, Integer>builder()
-                .put(MY_HP, MY_HP.getNumTypes())
-                .put(ENEMY_HP, ENEMY_HP.getNumTypes())
-                .put(DISTANCE_TO_ENEMY, DISTANCE_TO_ENEMY.getNumTypes())
-                .put(DISTANCE_TO_WALL, DISTANCE_TO_WALL.getNumTypes())
-                .put(ENEMY_ROBOT_HEADING, ENEMY_ROBOT_HEADING.getNumTypes())
-                .build();
-    }
-
-    @Override
-    public String toString() {
+    /**
+     * Return name of the file that stores win status
+     *
+     * @return filename for the log file
+     */
+    private String getWinRoundLogFileName() {
         return String.format(
-                "Current State Array: %s", Arrays.toString(this.getIndexedStateValue()));
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) return true;
-
-        if (!(obj instanceof State)) return false;
-
-        final State state = (State) obj;
-
-        return Arrays.equals(this.getIndexedStateValue(), state.getIndexedStateValue());
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(this.getIndexedStateValue());
+                "win-round-%s-%s-0.3.log",
+                this.isOnPolicy ? "OnPolicy" : "OffPolicy",
+                this.isImmediateReward ? "ImmediateReward" : "TerminalReward");
     }
 }
-
-```
-
-### `org.homework.robot.model.StateName`
-```java
-
-
-```
-
-### `org.homework.robot.model.Action`
-```java
-
-
 ```
