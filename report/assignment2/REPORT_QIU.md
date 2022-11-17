@@ -18,7 +18,7 @@ c) Implement a version of your robot that assumes only terminal rewards and show
 
 ## Part 3
 
-This part is about exploration. While training via RL, the next move is selected randomly with probability  and greedily with probability
+This part is about exploration. While training via RL, the next move is selected randomly with probability e and greedily with probability 1-e
 
-a) Compare training performance using different values of e including no exploration at all. Provide graphs of the measured performance of your tank vs .
+a) Compare training performance using different values of e including no exploration at all. Provide graphs of the measured performance of your tank vs e.
 
