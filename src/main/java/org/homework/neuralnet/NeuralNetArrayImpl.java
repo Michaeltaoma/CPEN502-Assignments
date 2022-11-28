@@ -3,12 +3,9 @@ package org.homework.neuralnet;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.nd4j.linalg.api.buffer.DataType;
-import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.ops.transforms.Transforms;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.homework.neuralnet.matrix.Matrix;
+import org.homework.robot.model.Action;
+import org.homework.robot.model.State;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -21,12 +18,12 @@ import java.io.Serializable;
 @Getter
 @Setter
 @NoArgsConstructor
-public class NeuralNetImpl implements NeuralNetInterface, Serializable {
-    private static final Logger logger = LoggerFactory.getLogger(NeuralNetImpl.class);
-    private static final DataType NEURAL_NET_DATA_TYPE = DataType.DOUBLE;
+public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
+    private static final long DEFAULT_EPOCH_CAPS = 10000000;
     private static final int DEFAULT_ARG_NUM_INPUT_ROWS = 1;
+    private static final int DEFAULT_HIDDEN_LAYER_NUM = 10;
     private static final int DEFAULT_PRINT_CYCLE = 100;
-    private static final double DEFAULT_ERROR_THRESHOLD = 0.05;
+    private static final double DEFAULT_ERROR_THRESHOLD = 0.01;
     private static final double DEFAULT_RAND_RANGE_DIFFERENCE = .5;
     private int argNumInputs;
     private int argNumOutputs;
@@ -35,20 +32,20 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
     private double argMomentumTerm;
     private double sigmoidLowerBound;
     private double sigmoidUpperBound;
-    private INDArray input;
-    private INDArray inputToHiddenWeight;
-    private INDArray deltaInputToHiddenWeight;
-    private INDArray hiddenLayerBias;
-    private INDArray deltaHiddenLayerBias;
-    private INDArray hiddenOutput;
-    private INDArray hiddenToOutputWeight;
-    private INDArray deltaHiddenToOutputWeight;
-    private INDArray output;
-    private INDArray outputLayerBias;
-    private INDArray deltaOutputLayerBias;
+    private Matrix input;
+    private Matrix inputToHiddenWeight;
+    private Matrix deltaInputToHiddenWeight;
+    private Matrix hiddenLayerBias;
+    private Matrix deltaHiddenLayerBias;
+    private Matrix hiddenOutput;
+    private Matrix hiddenToOutputWeight;
+    private Matrix deltaHiddenToOutputWeight;
+    private Matrix output;
+    private Matrix outputLayerBias;
+    private Matrix deltaOutputLayerBias;
     private boolean isBipolar;
 
-    public NeuralNetImpl(
+    public NeuralNetArrayImpl(
             final int argNumInputs,
             final int argNumHidden,
             final int argNumOutputs,
@@ -68,9 +65,21 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
         this.initialization();
     }
 
+    public NeuralNetArrayImpl(final State state) {
+        this(
+                state.getIndexedStateValue().length,
+                DEFAULT_HIDDEN_LAYER_NUM,
+                Action.values().length,
+                .4,
+                .0,
+                1,
+                0,
+                false);
+    }
+
     @Override
     public double outputFor(final double[] X) {
-        return this.forward(new double[][] {X}).toDoubleMatrix()[0][0];
+        return this.forward(new double[][] {X}).data[0][0];
     }
 
     /**
@@ -79,8 +88,8 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
      * @param X input vector
      * @return output vector as INDArray
      */
-    public INDArray forward(final double[][] X) {
-        this.input = Nd4j.create(X);
+    public Matrix forward(final double[][] X) {
+        this.input = new Matrix(X);
         // Hidden output = [x1, x2] * [[h11, h12, h13, h14], [h21, h22, h23, h24]] + [b1, b2, b3,
         // b4]
         this.hiddenOutput =
@@ -92,6 +101,15 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
                                 .mmul(this.hiddenToOutputWeight)
                                 .add(this.outputLayerBias));
         return this.getOutput();
+    }
+
+    public Matrix batchForward(final double[][] X) {
+        final int numSample = X.length;
+        final double[][] res = new double[numSample][this.argNumOutputs];
+        for (int i = 0; i < numSample; i++) {
+            res[i] = this.forward(new double[][] {X[i]}).getData()[0];
+        }
+        return new Matrix(res);
     }
 
     @Override
@@ -108,10 +126,11 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
      * @return The error in the output for that input vector
      */
     public double train(final double[] X, final double[] argValue) {
-        final INDArray output = this.forward(new double[][] {X});
-        final INDArray targetOutput = Nd4j.create(new double[][] {argValue});
-        final INDArray lossValue = this.loss(output, targetOutput);
-        final double error = lossValue.sum(0).sumNumber().doubleValue();
+        final Matrix output = this.forward(new double[][] {X});
+        final Matrix targetOutput = new Matrix(new double[][] {argValue});
+        final Matrix lossValue = this.loss(output, targetOutput);
+        //        final double error = lossValue.sum(0).sumNumber().doubleValue();
+        final double error = lossValue.sumValues();
         this.backpropagation(output, targetOutput);
         return error;
     }
@@ -136,16 +155,13 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
             totalError += curEpochError;
 
             if (elapsedEpoch++ % DEFAULT_PRINT_CYCLE == 0)
-                logger.info(
-                        String.format(
-                                "Current Error: %f at Epoch %d", curEpochError, elapsedEpoch));
+                System.out.printf("Current Error: %f at Epoch %d%n", curEpochError, elapsedEpoch);
 
-        } while (elapsedEpoch > 0 && curEpochError > DEFAULT_ERROR_THRESHOLD);
+        } while (elapsedEpoch < DEFAULT_EPOCH_CAPS && curEpochError > DEFAULT_ERROR_THRESHOLD);
 
-        logger.info(
-                String.format(
-                        "NN trained for %d epochs, reached error per epoch = %.2f, best error: %.2f",
-                        elapsedEpoch, totalError / elapsedEpoch, curEpochError));
+        System.out.printf(
+                "NN trained for %d epochs, reached error per epoch = %.2f, best error: %.2f%n",
+                elapsedEpoch, totalError / elapsedEpoch, curEpochError);
     }
 
     /**
@@ -155,11 +171,11 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
      * @param actualOutput The actual output of the neural network
      * @param targetOutput The target output of the neural network
      */
-    private void backpropagation(final INDArray actualOutput, final INDArray targetOutput) {
-        final INDArray actualTargetDiff = actualOutput.sub(targetOutput);
+    private void backpropagation(final Matrix actualOutput, final Matrix targetOutput) {
+        final Matrix actualTargetDiff = actualOutput.sub(targetOutput);
 
         // Calculate weight update for hiddenToOutputWeight
-        final INDArray deltaOutputLayer =
+        final Matrix deltaOutputLayer =
                 this.isBipolar
                         ? actualTargetDiff.mul(
                                 (this.output.mul(-1).add(1)).mul((this.output.add(1))).mul(.5))
@@ -175,7 +191,7 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
                                         .mmul(deltaOutputLayer));
 
         // Calculate weight update for inputToHiddenWeight
-        final INDArray deltaHiddenLayer =
+        final Matrix deltaHiddenLayer =
                 this.isBipolar
                         ? (this.hiddenOutput.mul(-1).add(1))
                                 .mul(this.hiddenOutput.add(1))
@@ -214,33 +230,24 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
     }
 
     /**
-     * Loss function: 1/2 * (y - y')^2
+     * NEED TO DO
      *
      * @param actualOutput Actual output that the model produce
      * @param targetOutput Target output that the model need
      * @return Array of loss
      */
-    public INDArray loss(final INDArray actualOutput, final INDArray targetOutput) {
-        return Transforms.pow(actualOutput.sub(targetOutput), 2).mul(.5);
+    public Matrix loss(final Matrix actualOutput, final Matrix targetOutput) {
+        return actualOutput.sub(targetOutput).elementWiseOp(0, (a, b) -> Math.pow(a, 2)).mul(.5);
     }
 
     /**
      * Calculate sigmoid for every entry of the matrix
      *
-     * @param indArray Matrix needed to be sigmoided
      * @return Matrix after applying sigmoid
      */
-    public INDArray sigmoidMatrix(final INDArray indArray) {
-        if (!this.isBipolar) return Transforms.sigmoid(indArray);
-
-        for (int row = 0; row < indArray.shape()[0]; row++) {
-            for (int col = 0; col < indArray.shape()[1]; col++) {
-                indArray.putScalar(
-                        new int[] {row, col}, this.sigmoid(indArray.getDouble(row, col)));
-            }
-        }
-
-        return indArray;
+    public Matrix sigmoidMatrix(final Matrix matrix) {
+        return matrix.elementWiseOp(
+                0, (a, b) -> this.isBipolar ? this.sigmoid(a) : this.customSigmoid(a));
     }
 
     @Override
@@ -250,8 +257,7 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
 
     @Override
     public double customSigmoid(final double x) {
-        return (this.sigmoidUpperBound - this.sigmoidLowerBound) / (1 + Math.pow(Math.E, (-1 * x)))
-                - this.sigmoidLowerBound;
+        return 1 / (1 + Math.exp(-x));
     }
 
     private void initialization() {
@@ -263,46 +269,42 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
     @Override
     public void initializeWeights() {
         this.inputToHiddenWeight =
-                Nd4j.rand(NEURAL_NET_DATA_TYPE, this.argNumInputs, this.argNumHidden)
+                Matrix.initRandMatrix(this.argNumInputs, this.argNumHidden)
                         .sub(DEFAULT_RAND_RANGE_DIFFERENCE);
+
         this.hiddenToOutputWeight =
-                Nd4j.rand(NEURAL_NET_DATA_TYPE, this.argNumHidden, this.argNumOutputs)
+                Matrix.initRandMatrix(this.argNumHidden, this.argNumOutputs)
                         .sub(DEFAULT_RAND_RANGE_DIFFERENCE);
     }
 
     @Override
     public void zeroWeights() {
-        this.inputToHiddenWeight =
-                Nd4j.zeros(NEURAL_NET_DATA_TYPE, this.argNumInputs, this.argNumHidden);
-        this.hiddenToOutputWeight =
-                Nd4j.zeros(NEURAL_NET_DATA_TYPE, this.argNumHidden, this.argNumOutputs);
+        this.inputToHiddenWeight = Matrix.initZeroMatrix(this.argNumInputs, this.argNumHidden);
+
+        this.hiddenToOutputWeight = Matrix.initZeroMatrix(this.argNumHidden, this.argNumOutputs);
     }
 
     /** Initialize bias value to 1.0 */
     private void initializeBias() {
         this.hiddenLayerBias =
-                Nd4j.ones(NEURAL_NET_DATA_TYPE, DEFAULT_ARG_NUM_INPUT_ROWS, this.argNumHidden);
+                Matrix.initZeroMatrix(DEFAULT_ARG_NUM_INPUT_ROWS, this.argNumHidden).add(1.0);
+
         this.outputLayerBias =
-                Nd4j.ones(NEURAL_NET_DATA_TYPE, DEFAULT_ARG_NUM_INPUT_ROWS, this.argNumOutputs);
+                Matrix.initZeroMatrix(DEFAULT_ARG_NUM_INPUT_ROWS, this.argNumOutputs).add(1.0);
     }
 
     /** Initialize layer placeholder */
     private void initializeLayer() {
-        this.input = Nd4j.rand(NEURAL_NET_DATA_TYPE, DEFAULT_ARG_NUM_INPUT_ROWS, this.argNumInputs);
-        this.hiddenOutput =
-                Nd4j.rand(NEURAL_NET_DATA_TYPE, DEFAULT_ARG_NUM_INPUT_ROWS, this.argNumHidden);
-        this.output =
-                Nd4j.rand(NEURAL_NET_DATA_TYPE, DEFAULT_ARG_NUM_INPUT_ROWS, this.argNumOutputs);
-
+        this.input = Matrix.initRandMatrix(DEFAULT_ARG_NUM_INPUT_ROWS, this.argNumInputs);
+        this.hiddenOutput = Matrix.initRandMatrix(DEFAULT_ARG_NUM_INPUT_ROWS, this.argNumHidden);
+        this.output = Matrix.initRandMatrix(DEFAULT_ARG_NUM_INPUT_ROWS, this.argNumOutputs);
         this.deltaHiddenLayerBias =
-                Nd4j.zeros(NEURAL_NET_DATA_TYPE, DEFAULT_ARG_NUM_INPUT_ROWS, this.argNumHidden);
+                Matrix.initZeroMatrix(DEFAULT_ARG_NUM_INPUT_ROWS, this.argNumHidden);
         this.deltaOutputLayerBias =
-                Nd4j.zeros(NEURAL_NET_DATA_TYPE, DEFAULT_ARG_NUM_INPUT_ROWS, this.argNumOutputs);
-
-        this.deltaInputToHiddenWeight =
-                Nd4j.zeros(NEURAL_NET_DATA_TYPE, this.argNumInputs, this.argNumHidden);
+                Matrix.initZeroMatrix(DEFAULT_ARG_NUM_INPUT_ROWS, this.argNumOutputs);
+        this.deltaInputToHiddenWeight = Matrix.initZeroMatrix(this.argNumInputs, this.argNumHidden);
         this.deltaHiddenToOutputWeight =
-                Nd4j.zeros(NEURAL_NET_DATA_TYPE, this.argNumHidden, this.argNumOutputs);
+                Matrix.initZeroMatrix(this.argNumHidden, this.argNumOutputs);
     }
 
     @Override
@@ -311,10 +313,10 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
             final FileOutputStream fileOutputStream = new FileOutputStream(argFile, false);
             final PrintStream printStream = new PrintStream(fileOutputStream);
 
-            final long inputToHiddenWeightRows = this.inputToHiddenWeight.size(0);
-            final long inputToHiddenWeightCols = this.inputToHiddenWeight.size(1);
-            final long hiddenToOutputWeightRows = this.hiddenToOutputWeight.size(0);
-            final long hiddenToOutputWeightCols = this.hiddenToOutputWeight.size(1);
+            final long inputToHiddenWeightRows = this.inputToHiddenWeight.rowNum;
+            final long inputToHiddenWeightCols = this.inputToHiddenWeight.colNum;
+            final long hiddenToOutputWeightRows = this.hiddenToOutputWeight.rowNum;
+            final long hiddenToOutputWeightCols = this.hiddenToOutputWeight.colNum;
             printStream.println(inputToHiddenWeightRows);
             printStream.println(inputToHiddenWeightCols);
             printStream.println(hiddenToOutputWeightRows);
@@ -322,12 +324,12 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
 
             for (int x = 0; x < inputToHiddenWeightRows; ++x) {
                 for (int y = 0; y < inputToHiddenWeightCols; ++y) {
-                    printStream.println(this.inputToHiddenWeight.getDouble(x, y));
+                    printStream.println(this.inputToHiddenWeight.data[x][y]);
                 }
             }
             for (int x = 0; x < hiddenToOutputWeightRows; ++x) {
                 for (int y = 0; y < hiddenToOutputWeightCols; ++y) {
-                    printStream.println(this.hiddenToOutputWeight.getDouble(x, y));
+                    printStream.println(this.hiddenToOutputWeight.data[x][y]);
                 }
             }
 
@@ -346,27 +348,29 @@ public class NeuralNetImpl implements NeuralNetInterface, Serializable {
             final long inputToHiddenWeightCols = Long.parseLong(bufferedReader.readLine());
             final long hiddenToOutputWeightRows = Long.parseLong(bufferedReader.readLine());
             final long hiddenToOutputWeightCols = Long.parseLong(bufferedReader.readLine());
-            if ((inputToHiddenWeightRows != this.inputToHiddenWeight.size(0))
-                    || (inputToHiddenWeightCols != this.inputToHiddenWeight.size(1))) {
-                logger.info("wrong number of input neurons");
+            if ((inputToHiddenWeightRows != this.inputToHiddenWeight.rowNum)
+                    || (inputToHiddenWeightCols != this.inputToHiddenWeight.rowNum)) {
+                System.out.println("wrong number of input neurons");
                 bufferedReader.close();
                 throw new IOException();
             }
-            if ((hiddenToOutputWeightRows != this.hiddenToOutputWeight.size(0))
-                    || (hiddenToOutputWeightCols != this.hiddenToOutputWeight.size(1))) {
-                logger.info("wrong number of hidden neurons");
+            if ((hiddenToOutputWeightRows != this.hiddenToOutputWeight.rowNum)
+                    || (hiddenToOutputWeightCols != this.hiddenToOutputWeight.colNum)) {
+                System.out.println("wrong number of hidden neurons");
                 bufferedReader.close();
                 throw new IOException();
             }
 
             for (int x = 0; x < inputToHiddenWeightRows; ++x) {
                 for (int y = 0; y < inputToHiddenWeightCols; ++y) {
-                    this.inputToHiddenWeight.put(x, y, Double.valueOf(bufferedReader.readLine()));
+                    this.inputToHiddenWeight.data[x][y] =
+                            Double.parseDouble(bufferedReader.readLine());
                 }
             }
             for (int x = 0; x < hiddenToOutputWeightRows; ++x) {
                 for (int y = 0; y < hiddenToOutputWeightCols; ++y) {
-                    this.hiddenToOutputWeight.put(x, y, Double.valueOf(bufferedReader.readLine()));
+                    this.hiddenToOutputWeight.data[x][y] =
+                            Double.parseDouble(bufferedReader.readLine());
                 }
             }
 

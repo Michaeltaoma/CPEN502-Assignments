@@ -6,27 +6,29 @@ Xuechun Qiu, 55766737
 
 Tao Ma, 13432885
 
-
 ## Part 1
 
 As for part 1, your submission should be a brief document clearly showing the graphs requested about. Please number your
 graphs as above and also include in your report an appendix section containing your source code.
 
-
 ## Part 2
-a) Draw a graph of a parameter that reflects a measure of progress of learning and comment on the convergence of learning of your robot.
+
+a) Draw a graph of a parameter that reflects a measure of progress of learning and comment on the convergence of
+learning of your robot.
 
 <img src="img/win-round-OffPolicy-ImmediateReward-Qiu.png" alt="win-round-OffPolicy-ImmediateReward" style="zoom:55%;" />
 
 We use learning rate = 0.1, discounting factor = 0.9, and epsilon = 0.1 to get the graph.
 
-b) Using your robot, show a graph comparing the performance of your robot using on-policy learning vs off-policy learning.
+b) Using your robot, show a graph comparing the performance of your robot using on-policy learning vs off-policy
+learning.
 
 <img src="img/win-round-on-policy-off-policy-Qiu.png" alt="win-round-on-policy-off-policy" style="zoom:55%;" />
 
 On-policy (Sarsa) algorithm performs a little better than off-policy (q-learning) one.
 
-c) Implement a version of your robot that assumes only terminal rewards and show & compare its behaviour with one having intermediate rewards.
+c) Implement a version of your robot that assumes only terminal rewards and show & compare its behaviour with one having
+intermediate rewards.
 
 <img src="img/win-round-OffPolicy-TerminalReward-Qiu.png" alt="win-round-OffPolicy-ImmediateReward-TerminalReward" style="zoom:55%;" />
 
@@ -34,17 +36,19 @@ Robot takes immediate reward perform much better than only takes terminal reward
 
 ## Part 3
 
-This part is about exploration. While training via RL, the next move is selected randomly with probability e and greedily with probability 1-e
+This part is about exploration. While training via RL, the next move is selected randomly with probability e and
+greedily with probability 1-e
 
-a) Compare training performance using different values of e including no exploration at all. Provide graphs of the measured performance of your tank vs e.
+a) Compare training performance using different values of e including no exploration at all. Provide graphs of the
+measured performance of your tank vs e.
 
 <img src="img/win-round-OffPolicy-ImmediateReward-Epsilon-Qiu.png" alt="win-round-OffPolicy-ImmediateReward-Epsilon" style="zoom:55%;" />
 
-With larger epsilon, win rate will be lower. When epsilon=1.0, the robot will take random action. 
+With larger epsilon, win rate will be lower. When epsilon=1.0, the robot will take random action.
 
 ## Appendix
 
-###  org.homework.robot.model.Action
+### org.homework.robot.model.Action
 
 ```java
 package org.homework.robot.model;
@@ -505,7 +509,7 @@ import org.homework.robot.model.Action;
 import org.homework.robot.model.ImmutableState;
 import org.homework.robot.model.State;
 import org.homework.robot.model.StateName;
-import org.homework.util.LogFile;
+import org.homework.util.LogFileUtil;
 import robocode.AdvancedRobot;
 import robocode.BattleEndedEvent;
 import robocode.BulletHitEvent;

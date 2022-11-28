@@ -1,12 +1,13 @@
 package org.homework.robot;
 
 import lombok.Setter;
+import org.homework.neuralnet.NeuralNetArrayImpl;
 import org.homework.rl.LUTImpl;
 import org.homework.robot.model.Action;
 import org.homework.robot.model.ImmutableState;
 import org.homework.robot.model.State;
 import org.homework.robot.model.StateName;
-import org.homework.util.LogFile;
+import org.homework.util.LogFileUtil;
 import robocode.AdvancedRobot;
 import robocode.BattleEndedEvent;
 import robocode.BulletHitEvent;
@@ -30,7 +31,8 @@ import java.util.Date;
 @Setter
 public class AIRobot extends AdvancedRobot {
     private static final double BASIC_REWARD = .5;
-    public static LogFile log = new LogFile();
+    public static LogFileUtil log = new LogFileUtil();
+    public static NeuralNetArrayImpl neuralNetArray = new NeuralNetArrayImpl();
     private static int winRound = 0;
     private static int totalRound = 0;
     private static int rounds = 0;

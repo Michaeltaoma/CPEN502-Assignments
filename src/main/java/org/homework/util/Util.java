@@ -2,8 +2,13 @@ package org.homework.util;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 
 public class Util {
+
+    public static double[][] getDeepArrayCopy(final double[][] matrix) {
+        return Arrays.stream(matrix).map(double[]::clone).toArray(double[][]::new);
+    }
 
     /**
      * Close output stream

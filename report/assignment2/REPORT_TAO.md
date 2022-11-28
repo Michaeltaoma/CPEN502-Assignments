@@ -50,7 +50,7 @@ measured performance of your tank.
 
 ## Appendix
 
-###  org.homework.robot.model.Action
+### org.homework.robot.model.Action
 
 ```java
 package org.homework.robot.model;
@@ -511,7 +511,7 @@ import org.homework.robot.model.Action;
 import org.homework.robot.model.ImmutableState;
 import org.homework.robot.model.State;
 import org.homework.robot.model.StateName;
-import org.homework.util.LogFile;
+import org.homework.util.LogFileUtil;
 import robocode.AdvancedRobot;
 import robocode.BattleEndedEvent;
 import robocode.BulletHitEvent;

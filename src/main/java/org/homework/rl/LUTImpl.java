@@ -15,46 +15,17 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Random;
-
-import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_ENEMY;
-import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_WALL;
-import static org.homework.robot.model.StateName.StateType.ENEMY_HP;
-import static org.homework.robot.model.StateName.StateType.MY_HP;
 
 @Getter
 public class LUTImpl implements LUTInterface {
     private static final double learningRate = 0.1;
     private static final double discountFactor = 0.9;
     private static final double epsilon = 0.1;
-    private final int myHPTypes;
-    private final int enemyHPTypes;
-    private final int distanceToEnemyTypes;
-    private final int distanceToWallTypes;
     private final int actionSize;
     public Map<State, double[]> qTable;
 
-    public LUTImpl(
-            final int myHPTypes,
-            final int enemyHPTypes,
-            final int distanceToEnemyTypes,
-            final int distanceToWallTypes,
-            final int actionSize) {
-        this.myHPTypes = myHPTypes;
-        this.enemyHPTypes = enemyHPTypes;
-        this.distanceToEnemyTypes = distanceToEnemyTypes;
-        this.distanceToWallTypes = distanceToWallTypes;
-        this.actionSize = actionSize;
-
-        this.initialiseLUT();
-    }
-
     public LUTImpl(final State state) {
-        this.myHPTypes = this.getStateDimension(state, MY_HP);
-        this.enemyHPTypes = this.getStateDimension(state, ENEMY_HP);
-        this.distanceToEnemyTypes = this.getStateDimension(state, DISTANCE_TO_ENEMY);
-        this.distanceToWallTypes = this.getStateDimension(state, DISTANCE_TO_WALL);
         this.actionSize = Action.values().length;
         this.initialiseLUT();
     }
@@ -157,10 +128,6 @@ public class LUTImpl implements LUTInterface {
                     prevDimension,
                     prevAction);
         }
-    }
-
-    public int getStateDimension(final State state, final StateName.StateType stateType) {
-        return Optional.ofNullable(state.getStateToDimensionMap().get(stateType)).orElse(0);
     }
 
     @Override

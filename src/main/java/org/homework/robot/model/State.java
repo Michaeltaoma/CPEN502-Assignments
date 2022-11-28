@@ -1,15 +1,8 @@
 package org.homework.robot.model;
 
-import com.google.common.collect.ImmutableMap;
 import org.immutables.value.Value;
 
 import java.util.Arrays;
-
-import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_ENEMY;
-import static org.homework.robot.model.StateName.StateType.DISTANCE_TO_WALL;
-import static org.homework.robot.model.StateName.StateType.ENEMY_HP;
-import static org.homework.robot.model.StateName.StateType.ENEMY_ROBOT_HEADING;
-import static org.homework.robot.model.StateName.StateType.MY_HP;
 
 @Value.Immutable
 public abstract class State {
@@ -59,17 +52,6 @@ public abstract class State {
             this.getX().ordinal(),
             this.getY().ordinal()
         };
-    }
-
-    @Value.Default
-    public ImmutableMap<StateName.StateType, Integer> getStateToDimensionMap() {
-        return ImmutableMap.<StateName.StateType, Integer>builder()
-                .put(MY_HP, MY_HP.getNumTypes())
-                .put(ENEMY_HP, ENEMY_HP.getNumTypes())
-                .put(DISTANCE_TO_ENEMY, DISTANCE_TO_ENEMY.getNumTypes())
-                .put(DISTANCE_TO_WALL, DISTANCE_TO_WALL.getNumTypes())
-                .put(ENEMY_ROBOT_HEADING, ENEMY_ROBOT_HEADING.getNumTypes())
-                .build();
     }
 
     @Override

@@ -4,7 +4,7 @@ import robocode.RobocodeFileWriter;
 
 import java.io.File;
 
-public class LogFile {
+public class LogFileUtil {
     public void writeToFile(final File fileToWrite, final double winRate, final int roundCount) {
         try {
             final RobocodeFileWriter fileWriter =
