@@ -22,15 +22,15 @@ import java.util.Random;
 @Setter
 @NoArgsConstructor
 public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
-    private static final long DEFAULT_EPOCH_CAPS = 10000000;
+    private static final long DEFAULT_EPOCH_CAPS = 1000;
     private static final int DEFAULT_ARG_NUM_INPUT_ROWS = 1;
-    private static final int DEFAULT_HIDDEN_LAYER_NUM = 10;
+    private static final int DEFAULT_HIDDEN_LAYER_NUM = 20;
     private static final int DEFAULT_PRINT_CYCLE = 100;
-    private static final double DEFAULT_ERROR_THRESHOLD = 0.01;
+    private static final double DEFAULT_ERROR_THRESHOLD = 0.08;
     private static final double DEFAULT_RAND_RANGE_DIFFERENCE = .5;
     private static final double ALPHA = 0.1;
     private static final double GAMMA = 0.9;
-    private static final double RANDOM_RATE = 0.4;
+    private static final double RANDOM_RATE = 0.1;
     private int argNumInputs;
     private int argNumOutputs;
     private int argNumHidden;
@@ -71,16 +71,25 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
         this.initialization();
     }
 
-    public NeuralNetArrayImpl(final State state) {
+    public NeuralNetArrayImpl(
+            final State state,
+            final int argNumHidden,
+            final double argLearningRate,
+            final double argMomentumTerm,
+            final boolean isBipolar) {
         this(
                 state.getIndexedStateValue().length,
-                DEFAULT_HIDDEN_LAYER_NUM,
+                argNumHidden,
                 Action.values().length,
-                .4,
-                .0,
+                argLearningRate,
+                argMomentumTerm,
                 1,
                 0,
-                false);
+                isBipolar);
+    }
+
+    public NeuralNetArrayImpl(final State state) {
+        this(state, 10, 0.1, 0.0, false);
     }
 
     @Override
@@ -317,6 +326,10 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
                 Matrix.initZeroMatrix(this.argNumHidden, this.argNumOutputs);
     }
 
+    public void save(final String argFileName) {
+        this.save(new File(argFileName));
+    }
+
     @Override
     public void save(final File argFile) {
         try {
@@ -349,6 +362,8 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
             System.out.println("Failed to save the weights of a neural net.");
         }
     }
+
+    public void load(final File argFileName) {}
 
     @Override
     public void load(final String argFileName) throws IOException {
