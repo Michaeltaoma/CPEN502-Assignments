@@ -1,5 +1,6 @@
 package org.homework.robot;
 
+import lombok.Getter;
 import lombok.Setter;
 import org.homework.neuralnet.NeuralNetArrayImpl;
 import org.homework.rl.LUTImpl;
@@ -29,20 +30,21 @@ import java.util.Collections;
 import java.util.Date;
 
 @Setter
+@Getter
 public class AIRobot extends AdvancedRobot {
     private static final double BASIC_REWARD = .5;
-    public static LogFileUtil log = new LogFileUtil();
-    public static NeuralNetArrayImpl neuralNetArray = new NeuralNetArrayImpl();
+    public static State currentState = ImmutableState.builder().build();
+    public static State prevState = ImmutableState.builder().from(currentState).build();
+    private static LogFileUtil log = new LogFileUtil();
+    private static NeuralNetArrayImpl neuralNetArray = new NeuralNetArrayImpl();
     private static int winRound = 0;
     private static int totalRound = 0;
     private static int rounds = 0;
-    private static State currentState = ImmutableState.builder().build();
     private static LUTImpl lut = new LUTImpl(currentState);
-    private static State prevState = ImmutableState.builder().from(currentState).build();
     private final boolean isOnPolicy = false;
-    private boolean isImmediateReward = true;
-    private double reward = .0;
     private Action currentAction;
+    private double reward = .0;
+    private boolean isImmediateReward = true;
     private double bearing = 0.0;
     private RobocodeFileOutputStream robocodeFileOutputStream;
 
@@ -61,7 +63,7 @@ public class AIRobot extends AdvancedRobot {
     }
 
     /** Act based on action */
-    private void act() {
+    public void act() {
         this.setTurnLeft(this.currentAction.getDirection()[0]);
         this.setTurnRight(this.currentAction.getDirection()[1]);
         this.setAhead(this.currentAction.getDirection()[2]);
@@ -78,7 +80,7 @@ public class AIRobot extends AdvancedRobot {
      * @param event The event of scan
      * @return State represent current
      */
-    public State getCurrentState(final ScannedRobotEvent event) {
+    public State findCurrentState(final ScannedRobotEvent event) {
         this.bearing = event.getBearing();
         return ImmutableState.builder()
                 .currentHP(StateName.HP.values()[this.toCategoricalState(this.getEnergy(), 30, 2)])
@@ -141,7 +143,7 @@ public class AIRobot extends AdvancedRobot {
      */
     private void updateRobotState(final ScannedRobotEvent event) {
         prevState = ImmutableState.builder().from(currentState).build();
-        currentState = ImmutableState.builder().from(this.getCurrentState(event)).build();
+        currentState = ImmutableState.builder().from(this.findCurrentState(event)).build();
     }
 
     /** Called when the enemy robot has been scanned */

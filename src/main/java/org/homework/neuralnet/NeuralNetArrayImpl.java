@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.homework.neuralnet.matrix.Matrix;
 import org.homework.robot.model.Action;
 import org.homework.robot.model.State;
+import org.homework.util.Util;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,6 +15,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Random;
 
 @Getter
 @Setter
@@ -25,6 +28,9 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
     private static final int DEFAULT_PRINT_CYCLE = 100;
     private static final double DEFAULT_ERROR_THRESHOLD = 0.01;
     private static final double DEFAULT_RAND_RANGE_DIFFERENCE = .5;
+    private static final double ALPHA = 0.1;
+    private static final double GAMMA = 0.9;
+    private static final double RANDOM_RATE = 0.4;
     private int argNumInputs;
     private int argNumOutputs;
     private int argNumHidden;
@@ -80,6 +86,10 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
     @Override
     public double outputFor(final double[] X) {
         return this.forward(new double[][] {X}).data[0][0];
+    }
+
+    public double outputFor(final double[] X, final int index) {
+        return this.forward(new double[][] {X}).data[0][index];
     }
 
     /**
@@ -378,5 +388,101 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
         } catch (final IOException error) {
             System.out.println("Failed to open reader: " + error);
         }
+    }
+
+    public int chooseAction(final State currentState) {
+        if (Math.random() < RANDOM_RATE) {
+            return Action.values()[new Random().nextInt(Action.values().length)].ordinal();
+        }
+
+        double max = Double.NEGATIVE_INFINITY;
+        Action action = Action.AHEAD;
+
+        final double[] curQ =
+                this.forward(
+                                new double[][] {
+                                    Util.getDoubleArrayFromIntArray(
+                                            currentState.getIndexedStateValue())
+                                })
+                        .data[0];
+
+        for (int i = 0; i < Action.values().length; i++) {
+            if (max < curQ[i]) {
+                action = Action.values()[i];
+                max = curQ[i];
+            }
+        }
+
+        return action.ordinal();
+    }
+
+    public void qTrain(
+            final double reward,
+            final State prevState,
+            final Action prevAction,
+            final State curState) {
+
+        final double[] prevQ =
+                this.forward(
+                                new double[][] {
+                                    Util.getDoubleArrayFromIntArray(
+                                            prevState.getIndexedStateValue())
+                                })
+                        .data[0];
+
+        final double curQ =
+                Arrays.stream(
+                                this.forward(
+                                                new double[][] {
+                                                    Util.getDoubleArrayFromIntArray(
+                                                            curState.getIndexedStateValue())
+                                                })
+                                        .data[0])
+                        .max()
+                        .orElse(0);
+
+        final double loss = ALPHA * (reward + GAMMA * curQ - prevQ[prevAction.ordinal()]);
+
+        final double updatedQ = prevQ[prevAction.ordinal()] + loss;
+
+        final double[] targetQ = prevQ.clone();
+        targetQ[prevAction.ordinal()] = updatedQ;
+
+        this.backpropagation(
+                new Matrix(new double[][] {prevQ}), new Matrix(new double[][] {targetQ}));
+    }
+
+    public void sarsa(
+            final double reward,
+            final State prevState,
+            final Action prevAction,
+            final State curState,
+            final Action curAction) {
+
+        final double[] prevQ =
+                this.forward(
+                                new double[][] {
+                                    Util.getDoubleArrayFromIntArray(
+                                            prevState.getIndexedStateValue())
+                                })
+                        .data[0];
+
+        final double[] curQ =
+                this.forward(
+                                new double[][] {
+                                    Util.getDoubleArrayFromIntArray(curState.getIndexedStateValue())
+                                })
+                        .data[0];
+
+        final double[] targetQ = prevQ.clone();
+        targetQ[prevAction.ordinal()] =
+                prevQ[prevAction.ordinal()]
+                        + ALPHA
+                                * (reward
+                                        + GAMMA * curQ[curAction.ordinal()]
+                                        - prevQ[prevAction.ordinal()]);
+
+        this.backpropagation(
+                new Matrix(new double[][] {prevQ}), new Matrix(new double[][] {targetQ}));
     }
 }
