@@ -92,5 +92,10 @@ robocode {
             version = "1.0"
             description = "Description"
         }
+        register("NNRobot") {
+            classPath = "org.homework.robot.NNRobot"
+            version = "1.0"
+            description = "Description"
+        }
     }
 }

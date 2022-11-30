@@ -10,6 +10,14 @@ public class Util {
         return Arrays.stream(matrix).map(double[]::clone).toArray(double[][]::new);
     }
 
+    public static int[] getIntArrayFromDoubleArray(final double[] x) {
+        return Arrays.stream(x).mapToInt((val) -> new Double(val).intValue()).toArray();
+    }
+
+    public static double[] getDoubleArrayFromIntArray(final int[] x) {
+        return Arrays.stream(x).mapToDouble((val) -> new Integer(val).doubleValue()).toArray();
+    }
+
     /**
      * Close output stream
      *
