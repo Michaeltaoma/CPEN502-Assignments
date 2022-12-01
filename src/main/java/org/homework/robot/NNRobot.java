@@ -14,6 +14,8 @@ import org.homework.robot.model.ImmutableMemory;
 import org.homework.robot.model.ImmutableState;
 import org.homework.robot.model.Memory;
 
+import java.io.IOException;
+
 /**
  * Corners - a sample robot by Mathew Nelson.
  *
@@ -25,18 +27,17 @@ import org.homework.robot.model.Memory;
  */
 public class NNRobot extends AIRobot {
     private static final NeuralNetArrayImpl neuralNetArray =
-            new NeuralNetArrayImpl(ImmutableState.builder().build());
+            new NeuralNetArrayImpl(ImmutableState.builder().build(), 10, 0.3, 0.1, true);
     private static final int MINI_BATCH_SIZE = 20;
     private static final int MEMORY_SIZE = 100;
-
-    private static final String PREV_TRAINED_WEIGHT = "";
+    private static final String PREV_TRAINED_WEIGHT = "weights";
     private static final ReplayMemory<Memory> replayMemory = new ReplayMemory<>(MEMORY_SIZE);
 
     @Override
     public void run() {
         this.setAdjustGunForRobotTurn(true);
         this.setAdjustRadarForGunTurn(true);
-        neuralNetArray.load(this.getDataFile(PREV_TRAINED_WEIGHT));
+        this.load();
         while (true) {
             this.setTurnRadarLeftRadians(2 * Math.PI);
             this.scan();
@@ -72,6 +73,15 @@ public class NNRobot extends AIRobot {
                         experienceBatch.getPrevAction(),
                         experienceBatch.getCurState());
             }
+        }
+    }
+
+    @Override
+    public void load() {
+        try {
+            neuralNetArray.load(this.getDataFile(PREV_TRAINED_WEIGHT));
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }

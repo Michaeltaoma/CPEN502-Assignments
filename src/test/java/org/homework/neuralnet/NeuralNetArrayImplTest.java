@@ -77,7 +77,8 @@ class NeuralNetArrayImplTest {
 
     @Test
     void OFFLINE_TRAINING_PROCESS() throws IOException {
-        final NeuralNetArrayImpl nn = new NeuralNetArrayImpl(ImmutableState.builder().build());
+        final NeuralNetArrayImpl nn =
+                new NeuralNetArrayImpl(ImmutableState.builder().build(), 10, 0.3, 0.1, true);
 
         // lut q table gained from AI robot
         final String offlineTrainingDate = "robot-log/AIRobot-crazy-robot.txt";
@@ -102,5 +103,15 @@ class NeuralNetArrayImplTest {
         final String nnWeightFile = "./Weights";
 
         nn.save(nnWeightFile);
+
+        final NeuralNetArrayImpl nnTestLoad =
+                new NeuralNetArrayImpl(ImmutableState.builder().build(), 10, 0.3, 0.1, true);
+
+        nnTestLoad.load(nnWeightFile);
+
+        assertEquals(nn.getInputToHiddenWeight(), nnTestLoad.getInputToHiddenWeight());
+        assertEquals(nn.getHiddenToOutputWeight(), nnTestLoad.getHiddenToOutputWeight());
+        assertEquals(nn.getHiddenLayerBias(), nnTestLoad.getHiddenLayerBias());
+        assertEquals(nn.getOutputLayerBias(), nnTestLoad.getOutputLayerBias());
     }
 }

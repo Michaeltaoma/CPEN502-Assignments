@@ -274,7 +274,7 @@ public class AIRobot extends AdvancedRobot {
     }
 
     /** Load previous saved log file */
-    private void load() {
+    public void load() {
         try {
             lut.load(this.getDataFile(this.getEntryFileName()));
         } catch (final IOException e) {
