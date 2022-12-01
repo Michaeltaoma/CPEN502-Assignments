@@ -37,11 +37,7 @@ public class NNRobot extends AIRobot {
     public void run() {
         this.setAdjustGunForRobotTurn(true);
         this.setAdjustRadarForGunTurn(true);
-        try {
-            neuralNetArray.load(this.getDataFile(PREV_TRAINED_WEIGHT));
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
-        }
+        this.load();
         while (true) {
             this.setTurnRadarLeftRadians(2 * Math.PI);
             this.scan();
@@ -77,6 +73,15 @@ public class NNRobot extends AIRobot {
                         experienceBatch.getPrevAction(),
                         experienceBatch.getCurState());
             }
+        }
+    }
+
+    @Override
+    public void load() {
+        try {
+            neuralNetArray.load(this.getDataFile(PREV_TRAINED_WEIGHT));
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }

@@ -8,7 +8,14 @@ import org.homework.robot.model.Action;
 import org.homework.robot.model.State;
 import org.homework.util.Util;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -450,7 +457,7 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
             final long outputLayerBiasRows = Long.parseLong(bufferedReader.readLine());
             final long outputLayerBiasCols = Long.parseLong(bufferedReader.readLine());
             if ((deltaHiddenLayerBiasRows != this.deltaHiddenLayerBias.rowNum)
-                    || (deltaHiddenLayerBiasCols != this.deltaOutputLayerBias.colNum)) {
+                    || (deltaHiddenLayerBiasCols != this.deltaHiddenLayerBias.colNum)) {
                 System.out.println("Wrong number of delta output layer bias");
                 bufferedReader.close();
                 throw new IOException();
@@ -482,8 +489,7 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
             }
             for (int x = 0; x < hiddenLayerBiasRows; ++x) {
                 for (int y = 0; y < hiddenLayerBiasCols; ++y) {
-                    this.hiddenLayerBias.data[x][y] =
-                            Double.parseDouble(bufferedReader.readLine());
+                    this.hiddenLayerBias.data[x][y] = Double.parseDouble(bufferedReader.readLine());
                 }
             }
             for (int x = 0; x < deltaOutputLayerBiasRows; ++x) {
@@ -494,8 +500,7 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
             }
             for (int x = 0; x < outputLayerBiasRows; ++x) {
                 for (int y = 0; y < outputLayerBiasCols; ++y) {
-                    this.outputLayerBias.data[x][y] =
-                            Double.parseDouble(bufferedReader.readLine());
+                    this.outputLayerBias.data[x][y] = Double.parseDouble(bufferedReader.readLine());
                 }
             }
 
