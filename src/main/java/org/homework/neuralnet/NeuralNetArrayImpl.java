@@ -8,13 +8,7 @@ import org.homework.robot.model.Action;
 import org.homework.robot.model.State;
 import org.homework.util.Util;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.Serializable;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -363,25 +357,30 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
         }
     }
 
-    public void load(final File argFileName) {}
-
     @Override
     public void load(final String argFileName) throws IOException {
+        this.load(new File(argFileName));
+    }
+
+    public void load(final File argFileName) throws IOException {
         try {
-            final BufferedReader bufferedReader = new BufferedReader(new FileReader(argFileName));
+            if (!argFileName.exists() || argFileName.length() == 0) return;
+            final FileInputStream inputFile = new FileInputStream(argFileName);
+            final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputFile));
+
             final long inputToHiddenWeightRows = Long.parseLong(bufferedReader.readLine());
             final long inputToHiddenWeightCols = Long.parseLong(bufferedReader.readLine());
             final long hiddenToOutputWeightRows = Long.parseLong(bufferedReader.readLine());
             final long hiddenToOutputWeightCols = Long.parseLong(bufferedReader.readLine());
             if ((inputToHiddenWeightRows != this.inputToHiddenWeight.rowNum)
                     || (inputToHiddenWeightCols != this.inputToHiddenWeight.rowNum)) {
-                System.out.println("wrong number of input neurons");
+                System.out.println("Wrong number of input neurons");
                 bufferedReader.close();
                 throw new IOException();
             }
             if ((hiddenToOutputWeightRows != this.hiddenToOutputWeight.rowNum)
                     || (hiddenToOutputWeightCols != this.hiddenToOutputWeight.colNum)) {
-                System.out.println("wrong number of hidden neurons");
+                System.out.println("Wrong number of hidden neurons");
                 bufferedReader.close();
                 throw new IOException();
             }

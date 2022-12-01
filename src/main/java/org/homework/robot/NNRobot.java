@@ -14,6 +14,8 @@ import org.homework.robot.model.ImmutableMemory;
 import org.homework.robot.model.ImmutableState;
 import org.homework.robot.model.Memory;
 
+import java.io.IOException;
+
 /**
  * Corners - a sample robot by Mathew Nelson.
  *
@@ -36,7 +38,11 @@ public class NNRobot extends AIRobot {
     public void run() {
         this.setAdjustGunForRobotTurn(true);
         this.setAdjustRadarForGunTurn(true);
-        neuralNetArray.load(this.getDataFile(PREV_TRAINED_WEIGHT));
+        try {
+            neuralNetArray.load(this.getDataFile(PREV_TRAINED_WEIGHT));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         while (true) {
             this.setTurnRadarLeftRadians(2 * Math.PI);
             this.scan();
