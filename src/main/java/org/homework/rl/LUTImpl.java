@@ -169,7 +169,9 @@ public class LUTImpl implements LUTInterface {
     }
 
     @Override
-    public void load(final String argFileName) throws IOException {}
+    public void load(final String argFileName) throws IOException {
+        this.load(new File(argFileName));
+    }
 
     public void load(final File argFileName) throws IOException {
         if (!argFileName.exists() || argFileName.length() == 0) return;

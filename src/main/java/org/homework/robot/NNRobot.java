@@ -28,12 +28,15 @@ public class NNRobot extends AIRobot {
             new NeuralNetArrayImpl(ImmutableState.builder().build());
     private static final int MINI_BATCH_SIZE = 20;
     private static final int MEMORY_SIZE = 100;
+
+    private static final String PREV_TRAINED_WEIGHT = "";
     private static final ReplayMemory<Memory> replayMemory = new ReplayMemory<>(MEMORY_SIZE);
 
     @Override
     public void run() {
         this.setAdjustGunForRobotTurn(true);
         this.setAdjustRadarForGunTurn(true);
+        neuralNetArray.load(this.getDataFile(PREV_TRAINED_WEIGHT));
         while (true) {
             this.setTurnRadarLeftRadians(2 * Math.PI);
             this.scan();
