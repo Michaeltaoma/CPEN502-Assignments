@@ -26,11 +26,11 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
     private static final int DEFAULT_ARG_NUM_INPUT_ROWS = 1;
     private static final int DEFAULT_HIDDEN_LAYER_NUM = 20;
     private static final int DEFAULT_PRINT_CYCLE = 100;
-    private static final double DEFAULT_ERROR_THRESHOLD = 0.08;
+    private static final double DEFAULT_ERROR_THRESHOLD = 0.01;
     private static final double DEFAULT_RAND_RANGE_DIFFERENCE = .5;
     private static final double ALPHA = 0.1;
     private static final double GAMMA = 0.9;
-    private static final double RANDOM_RATE = 0.1;
+    private static final double RANDOM_RATE = 0.4;
     private int argNumInputs;
     private int argNumOutputs;
     private int argNumHidden;
