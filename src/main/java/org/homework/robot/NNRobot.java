@@ -27,11 +27,10 @@ import java.io.IOException;
  */
 public class NNRobot extends AIRobot {
     private static final NeuralNetArrayImpl neuralNetArray =
-            new NeuralNetArrayImpl(ImmutableState.builder().build());
+            new NeuralNetArrayImpl(ImmutableState.builder().build(), 10, 0.3, 0.1, true);
     private static final int MINI_BATCH_SIZE = 20;
     private static final int MEMORY_SIZE = 100;
-
-    private static final String PREV_TRAINED_WEIGHT = "";
+    private static final String PREV_TRAINED_WEIGHT = "weights";
     private static final ReplayMemory<Memory> replayMemory = new ReplayMemory<>(MEMORY_SIZE);
 
     @Override
@@ -40,7 +39,7 @@ public class NNRobot extends AIRobot {
         this.setAdjustRadarForGunTurn(true);
         try {
             neuralNetArray.load(this.getDataFile(PREV_TRAINED_WEIGHT));
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
         while (true) {

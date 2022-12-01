@@ -120,4 +120,20 @@ public class Matrix {
     public double sumValues() {
         return Arrays.stream(this.data).flatMapToDouble(Arrays::stream).sum();
     }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (obj == this) return true;
+
+        if (!(obj instanceof Matrix)) return false;
+
+        final Matrix matrix = (Matrix) obj;
+
+        return Arrays.deepEquals(this.data, matrix.data);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.deepHashCode(this.data);
+    }
 }

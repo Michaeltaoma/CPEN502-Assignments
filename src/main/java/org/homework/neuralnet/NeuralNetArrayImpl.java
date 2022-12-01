@@ -8,7 +8,14 @@ import org.homework.robot.model.Action;
 import org.homework.robot.model.State;
 import org.homework.util.Util;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -20,7 +27,7 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
     private static final int DEFAULT_ARG_NUM_INPUT_ROWS = 1;
     private static final int DEFAULT_HIDDEN_LAYER_NUM = 20;
     private static final int DEFAULT_PRINT_CYCLE = 100;
-    private static final double DEFAULT_ERROR_THRESHOLD = 0.01;
+    private static final double DEFAULT_ERROR_THRESHOLD = 0.05;
     private static final double DEFAULT_RAND_RANGE_DIFFERENCE = .5;
     private static final double ALPHA = 0.1;
     private static final double GAMMA = 0.9;
@@ -83,7 +90,7 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
     }
 
     public NeuralNetArrayImpl(final State state) {
-        this(state, 10, 0.1, 0.0, false);
+        this(state, 10, 0.3, 0.1, false);
     }
 
     @Override
@@ -366,14 +373,15 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
         try {
             if (!argFileName.exists() || argFileName.length() == 0) return;
             final FileInputStream inputFile = new FileInputStream(argFileName);
-            final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputFile));
+            final BufferedReader bufferedReader =
+                    new BufferedReader(new InputStreamReader(inputFile));
 
             final long inputToHiddenWeightRows = Long.parseLong(bufferedReader.readLine());
             final long inputToHiddenWeightCols = Long.parseLong(bufferedReader.readLine());
             final long hiddenToOutputWeightRows = Long.parseLong(bufferedReader.readLine());
             final long hiddenToOutputWeightCols = Long.parseLong(bufferedReader.readLine());
             if ((inputToHiddenWeightRows != this.inputToHiddenWeight.rowNum)
-                    || (inputToHiddenWeightCols != this.inputToHiddenWeight.rowNum)) {
+                    || (inputToHiddenWeightCols != this.inputToHiddenWeight.colNum)) {
                 System.out.println("Wrong number of input neurons");
                 bufferedReader.close();
                 throw new IOException();
