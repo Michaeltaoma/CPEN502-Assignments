@@ -8,14 +8,7 @@ import org.homework.robot.model.Action;
 import org.homework.robot.model.State;
 import org.homework.util.Util;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.io.Serializable;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -337,6 +330,7 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
             final FileOutputStream fileOutputStream = new FileOutputStream(argFile, false);
             final PrintStream printStream = new PrintStream(fileOutputStream);
 
+            // weights
             final long inputToHiddenWeightRows = this.inputToHiddenWeight.rowNum;
             final long inputToHiddenWeightCols = this.inputToHiddenWeight.colNum;
             final long hiddenToOutputWeightRows = this.hiddenToOutputWeight.rowNum;
@@ -354,6 +348,45 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
             for (int x = 0; x < hiddenToOutputWeightRows; ++x) {
                 for (int y = 0; y < hiddenToOutputWeightCols; ++y) {
                     printStream.println(this.hiddenToOutputWeight.data[x][y]);
+                }
+            }
+
+            // bias
+            final long deltaHiddenLayerBiasRows = this.deltaHiddenLayerBias.rowNum;
+            final long deltaHiddenLayerBiasCols = this.deltaHiddenLayerBias.colNum;
+            final long hiddenLayerBiasRows = this.hiddenLayerBias.rowNum;
+            final long hiddenLayerBiasCols = this.hiddenLayerBias.colNum;
+            final long deltaOutputLayerBiasRows = this.deltaOutputLayerBias.rowNum;
+            final long deltaOutputLayerBiasCols = this.deltaOutputLayerBias.colNum;
+            final long outputLayerBiasRows = this.outputLayerBias.rowNum;
+            final long outputLayerBiasCols = this.outputLayerBias.colNum;
+            printStream.println(deltaHiddenLayerBiasRows);
+            printStream.println(deltaHiddenLayerBiasCols);
+            printStream.println(hiddenLayerBiasRows);
+            printStream.println(hiddenLayerBiasCols);
+            printStream.println(deltaOutputLayerBiasRows);
+            printStream.println(deltaOutputLayerBiasCols);
+            printStream.println(outputLayerBiasRows);
+            printStream.println(outputLayerBiasCols);
+
+            for (int x = 0; x < deltaHiddenLayerBiasRows; ++x) {
+                for (int y = 0; y < deltaHiddenLayerBiasCols; ++y) {
+                    printStream.println(this.deltaHiddenLayerBias.data[x][y]);
+                }
+            }
+            for (int x = 0; x < hiddenLayerBiasRows; ++x) {
+                for (int y = 0; y < hiddenLayerBiasCols; ++y) {
+                    printStream.println(this.hiddenLayerBias.data[x][y]);
+                }
+            }
+            for (int x = 0; x < deltaOutputLayerBiasRows; ++x) {
+                for (int y = 0; y < deltaOutputLayerBiasCols; ++y) {
+                    printStream.println(this.deltaOutputLayerBias.data[x][y]);
+                }
+            }
+            for (int x = 0; x < outputLayerBiasRows; ++x) {
+                for (int y = 0; y < outputLayerBiasCols; ++y) {
+                    printStream.println(this.outputLayerBias.data[x][y]);
                 }
             }
 
@@ -376,6 +409,7 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
             final BufferedReader bufferedReader =
                     new BufferedReader(new InputStreamReader(inputFile));
 
+            // weights
             final long inputToHiddenWeightRows = Long.parseLong(bufferedReader.readLine());
             final long inputToHiddenWeightCols = Long.parseLong(bufferedReader.readLine());
             final long hiddenToOutputWeightRows = Long.parseLong(bufferedReader.readLine());
@@ -402,6 +436,65 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
             for (int x = 0; x < hiddenToOutputWeightRows; ++x) {
                 for (int y = 0; y < hiddenToOutputWeightCols; ++y) {
                     this.hiddenToOutputWeight.data[x][y] =
+                            Double.parseDouble(bufferedReader.readLine());
+                }
+            }
+
+            // bias
+            final long deltaHiddenLayerBiasRows = Long.parseLong(bufferedReader.readLine());
+            final long deltaHiddenLayerBiasCols = Long.parseLong(bufferedReader.readLine());
+            final long hiddenLayerBiasRows = Long.parseLong(bufferedReader.readLine());
+            final long hiddenLayerBiasCols = Long.parseLong(bufferedReader.readLine());
+            final long deltaOutputLayerBiasRows = Long.parseLong(bufferedReader.readLine());
+            final long deltaOutputLayerBiasCols = Long.parseLong(bufferedReader.readLine());
+            final long outputLayerBiasRows = Long.parseLong(bufferedReader.readLine());
+            final long outputLayerBiasCols = Long.parseLong(bufferedReader.readLine());
+            if ((deltaHiddenLayerBiasRows != this.deltaHiddenLayerBias.rowNum)
+                    || (deltaHiddenLayerBiasCols != this.deltaOutputLayerBias.colNum)) {
+                System.out.println("Wrong number of delta output layer bias");
+                bufferedReader.close();
+                throw new IOException();
+            }
+            if ((hiddenLayerBiasRows != this.hiddenLayerBias.rowNum)
+                    || (hiddenLayerBiasCols != this.hiddenLayerBias.colNum)) {
+                System.out.println("Wrong number of hidden layer bias");
+                bufferedReader.close();
+                throw new IOException();
+            }
+            if ((deltaOutputLayerBiasRows != this.deltaOutputLayerBias.rowNum)
+                    || (deltaOutputLayerBiasCols != this.deltaOutputLayerBias.colNum)) {
+                System.out.println("Wrong number of delta output layer bias");
+                bufferedReader.close();
+                throw new IOException();
+            }
+            if ((outputLayerBiasRows != this.outputLayerBias.rowNum)
+                    || (outputLayerBiasCols != this.outputLayerBias.colNum)) {
+                System.out.println("Wrong number of output layer bias");
+                bufferedReader.close();
+                throw new IOException();
+            }
+
+            for (int x = 0; x < deltaHiddenLayerBiasRows; ++x) {
+                for (int y = 0; y < deltaHiddenLayerBiasCols; ++y) {
+                    this.deltaHiddenLayerBias.data[x][y] =
+                            Double.parseDouble(bufferedReader.readLine());
+                }
+            }
+            for (int x = 0; x < hiddenLayerBiasRows; ++x) {
+                for (int y = 0; y < hiddenLayerBiasCols; ++y) {
+                    this.hiddenLayerBias.data[x][y] =
+                            Double.parseDouble(bufferedReader.readLine());
+                }
+            }
+            for (int x = 0; x < deltaOutputLayerBiasRows; ++x) {
+                for (int y = 0; y < deltaOutputLayerBiasCols; ++y) {
+                    this.deltaOutputLayerBias.data[x][y] =
+                            Double.parseDouble(bufferedReader.readLine());
+                }
+            }
+            for (int x = 0; x < outputLayerBiasRows; ++x) {
+                for (int y = 0; y < outputLayerBiasCols; ++y) {
+                    this.outputLayerBias.data[x][y] =
                             Double.parseDouble(bufferedReader.readLine());
                 }
             }
