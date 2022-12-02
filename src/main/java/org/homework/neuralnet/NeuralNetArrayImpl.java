@@ -23,15 +23,17 @@ import java.util.Random;
 @Setter
 @NoArgsConstructor
 public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
+    private static final String DEFAULT_NAME = "NN";
     private static final long DEFAULT_EPOCH_CAPS = 1000;
     private static final int DEFAULT_ARG_NUM_INPUT_ROWS = 1;
     private static final int DEFAULT_HIDDEN_LAYER_NUM = 20;
-    private static final int DEFAULT_PRINT_CYCLE = 100;
+    private static final int DEFAULT_PRINT_CYCLE = 10000;
     private static final double DEFAULT_ERROR_THRESHOLD = 0.05;
     private static final double DEFAULT_RAND_RANGE_DIFFERENCE = .5;
     private static final double ALPHA = 0.1;
     private static final double GAMMA = 0.9;
     private static final double RANDOM_RATE = 0.4;
+    private String name;
     private int argNumInputs;
     private int argNumOutputs;
     private int argNumHidden;
@@ -61,6 +63,7 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
             final double sigmoidLowerBound,
             final double sigmoidUpperBound,
             final boolean isBipolar) {
+        this.name = DEFAULT_NAME;
         this.argNumInputs = argNumInputs;
         this.argNumHidden = argNumHidden;
         this.argNumOutputs = argNumOutputs;
@@ -73,12 +76,36 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
     }
 
     public NeuralNetArrayImpl(
+            final String name,
+            final int argNumInputs,
+            final int argNumHidden,
+            final int argNumOutputs,
+            final double argLearningRate,
+            final double argMomentumTerm,
+            final double sigmoidLowerBound,
+            final double sigmoidUpperBound,
+            final boolean isBipolar) {
+        this(
+                argNumInputs,
+                argNumHidden,
+                argNumOutputs,
+                argLearningRate,
+                argMomentumTerm,
+                sigmoidLowerBound,
+                sigmoidUpperBound,
+                isBipolar);
+        this.name = name;
+    }
+
+    public NeuralNetArrayImpl(
+            final String name,
             final State state,
             final int argNumHidden,
             final double argLearningRate,
             final double argMomentumTerm,
             final boolean isBipolar) {
         this(
+                name,
                 state.getIndexedStateValue().length,
                 argNumHidden,
                 Action.values().length,
@@ -89,8 +116,28 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
                 isBipolar);
     }
 
-    public NeuralNetArrayImpl(final State state) {
-        this(state, 10, 0.3, 0.1, false);
+    public NeuralNetArrayImpl(
+            final String name,
+            final State state,
+            final int argNumHidden,
+            final int argNumOutputs,
+            final double argLearningRate,
+            final double argMomentumTerm,
+            final boolean isBipolar) {
+        this(
+                name,
+                state.getIndexedStateValue().length,
+                argNumHidden,
+                argNumOutputs,
+                argLearningRate,
+                argMomentumTerm,
+                1,
+                0,
+                isBipolar);
+    }
+
+    public NeuralNetArrayImpl(final String name, final State state) {
+        this(name, state, 10, 1, 0.3, 0.1, true);
     }
 
     @Override
@@ -123,6 +170,11 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
         return this.getOutput();
     }
 
+    public Matrix forward(final State state) {
+        return this.forward(
+                new double[][] {Util.getDoubleArrayFromIntArray(state.getIndexedStateValue())});
+    }
+
     public Matrix batchForward(final double[][] X) {
         final int numSample = X.length;
         final double[][] res = new double[numSample][this.argNumOutputs];
@@ -148,7 +200,7 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
     public double train(final double[] X, final double[] argValue) {
         final Matrix output = this.forward(new double[][] {X});
         final Matrix targetOutput = new Matrix(new double[][] {argValue});
-        final Matrix lossValue = this.loss(output, targetOutput);
+        final Matrix lossValue = this.loss(output, targetOutput, 0.5);
         //        final double error = lossValue.sum(0).sumNumber().doubleValue();
         final double error = lossValue.sumValues();
         this.backpropagation(output, targetOutput);
@@ -165,23 +217,30 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
     public void train(final double[][] X, final double[][] argValues) {
         final int numSample = X.length;
         int elapsedEpoch = 0;
-        double totalError = 0, curEpochError = 0;
+        double totalError = 0;
+        double curEpochError = 0;
+        double rmsError = 0;
         do {
             for (int i = 0; i < numSample; i++) {
                 curEpochError += this.train(X[i], argValues[i]);
             }
 
-            curEpochError /= numSample;
+            rmsError = this.rmse(curEpochError, numSample);
+
+            curEpochError /= new Integer(numSample).doubleValue();
+
             totalError += curEpochError;
 
             if (elapsedEpoch++ % DEFAULT_PRINT_CYCLE == 0)
-                System.out.printf("Current Error: %f at Epoch %d%n", curEpochError, elapsedEpoch);
+                System.out.printf(
+                        "%s: Current Error: %f at Epoch %d%n Current RMSE: %f at Epoch %d%n",
+                        this.name, curEpochError, elapsedEpoch, rmsError, elapsedEpoch);
 
         } while (elapsedEpoch < DEFAULT_EPOCH_CAPS && curEpochError > DEFAULT_ERROR_THRESHOLD);
 
         System.out.printf(
-                "NN trained for %d epochs, reached error per epoch = %.2f, best error: %.2f%n",
-                elapsedEpoch, totalError / elapsedEpoch, curEpochError);
+                "%s trained for %d epochs, reached error per epoch = %.2f, best error: %.2f%n",
+                this.name, elapsedEpoch, totalError / elapsedEpoch, curEpochError);
     }
 
     /**
@@ -191,7 +250,7 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
      * @param actualOutput The actual output of the neural network
      * @param targetOutput The target output of the neural network
      */
-    private void backpropagation(final Matrix actualOutput, final Matrix targetOutput) {
+    public void backpropagation(final Matrix actualOutput, final Matrix targetOutput) {
         final Matrix actualTargetDiff = actualOutput.sub(targetOutput);
 
         // Calculate weight update for hiddenToOutputWeight
@@ -250,14 +309,16 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
     }
 
     /**
-     * NEED TO DO
-     *
      * @param actualOutput Actual output that the model produce
      * @param targetOutput Target output that the model need
      * @return Array of loss
      */
-    public Matrix loss(final Matrix actualOutput, final Matrix targetOutput) {
-        return actualOutput.sub(targetOutput).elementWiseOp(0, (a, b) -> Math.pow(a, 2)).mul(.5);
+    public Matrix loss(
+            final Matrix actualOutput, final Matrix targetOutput, final double lossFactor) {
+        return actualOutput
+                .sub(targetOutput)
+                .elementWiseOp(0, (a, b) -> Math.pow(a, 2))
+                .mul(lossFactor);
     }
 
     /**
@@ -278,6 +339,10 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
     @Override
     public double customSigmoid(final double x) {
         return 1 / (1 + Math.exp(-x));
+    }
+
+    private double rmse(final double sampleError, final int sampleSize) {
+        return Math.sqrt(sampleError / new Integer(sampleSize).doubleValue());
     }
 
     private void initialization() {
