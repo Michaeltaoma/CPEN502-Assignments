@@ -12,14 +12,20 @@ Tao Ma, 13432885
 
 #### a) There are 3 options for the architecture of your neural network. Describe and draw all three options and state which you selected and why. (3pts)
 
-The first option is ...
+<img src="img/4.a.1.png" alt="single Q value output" style="zoom:55%;" />
 
-The second option is ...
+The first option is given state action pair as inputs, and then output single Q value.
 
-The third option is ...
+<img src="img/4.a.2.png" alt="single Q value output" style="zoom:55%;" />
+
+The second option is given states as inputs, and output Q values for different actions. 
+
+<img src="img/4.a.3.png" alt="single Q value output" style="zoom:55%;" />
+
+The third option is given neural networks as inputs, and output single Q value.
 
 
-We chose ... one to implement. The advantages are ...
+We chose the third one to implement, since every neural net is only for one action, it will not consider other weights that can affect the Q value. In this way, we can have a more accurate result.
 
 
 #### b) Show (as a graph) the results of training your neural network using the contents of the LUT from Part 2. Your answer should describe how you found the hyper-parameters which worked best for you (i.e. momentum, learning rate, number of hidden neurons). Provide graphs to backup your selection process. Compute the RMS error for your best results. (5 pts)
