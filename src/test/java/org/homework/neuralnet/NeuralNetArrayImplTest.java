@@ -67,7 +67,7 @@ class NeuralNetArrayImplTest {
     @Test
     void TEST_NN_FOR_DIFFERENT_DIMENSION() {
         final State mockState = ImmutableState.builder().build();
-        this.neuralNetArray = new NeuralNetArrayImpl(mockState);
+        this.neuralNetArray = new NeuralNetArrayImpl("mockNN", mockState);
         assertEquals(
                 Action.values().length,
                 this.neuralNetArray
@@ -78,7 +78,7 @@ class NeuralNetArrayImplTest {
     @Test
     void OFFLINE_TRAINING_PROCESS() throws IOException {
         final NeuralNetArrayImpl nn =
-                new NeuralNetArrayImpl(ImmutableState.builder().build(), 10, 0.3, 0.1, true);
+                new NeuralNetArrayImpl("NN", ImmutableState.builder().build(), 10, 0.3, 0.1, true);
 
         // lut q table gained from AI robot
         final String offlineTrainingDate = "robot-log/AIRobot-crazy-robot.txt";
@@ -105,7 +105,8 @@ class NeuralNetArrayImplTest {
         nn.save(nnWeightFile);
 
         final NeuralNetArrayImpl nnTestLoad =
-                new NeuralNetArrayImpl(ImmutableState.builder().build(), 10, 0.3, 0.1, true);
+                new NeuralNetArrayImpl(
+                        "NNTest", ImmutableState.builder().build(), 10, 0.3, 0.1, true);
 
         nnTestLoad.load(nnWeightFile);
 

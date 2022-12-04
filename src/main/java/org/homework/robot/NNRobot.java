@@ -7,11 +7,10 @@
  */
 package org.homework.robot;
 
-import org.homework.neuralnet.NeuralNetArrayImpl;
+import org.homework.neuralnet.EnsembleNeuralNet;
 import org.homework.replaymemory.ReplayMemory;
 import org.homework.robot.model.Action;
 import org.homework.robot.model.ImmutableMemory;
-import org.homework.robot.model.ImmutableState;
 import org.homework.robot.model.Memory;
 
 import java.io.IOException;
@@ -26,8 +25,8 @@ import java.io.IOException;
  * @author Flemming N. Larsen (contributor)
  */
 public class NNRobot extends AIRobot {
-    private static final NeuralNetArrayImpl neuralNetArray =
-            new NeuralNetArrayImpl(ImmutableState.builder().build(), 10, 0.3, 0.1, true);
+    private static final EnsembleNeuralNet ensembleNet =
+            new EnsembleNeuralNet(Action.values().length);
     private static final int MINI_BATCH_SIZE = 20;
     private static final int MEMORY_SIZE = 100;
     private static final String PREV_TRAINED_WEIGHT = "weights";
@@ -50,7 +49,7 @@ public class NNRobot extends AIRobot {
 
     @Override
     public Action chooseCurrentAction() {
-        return Action.values()[neuralNetArray.chooseAction(currentState)];
+        return Action.values()[ensembleNet.chooseAction(currentState)];
     }
 
     @Override
@@ -67,7 +66,7 @@ public class NNRobot extends AIRobot {
         if (replayMemory.sizeOf() >= MINI_BATCH_SIZE) {
             for (final Object object : replayMemory.randomSample(MINI_BATCH_SIZE)) {
                 final Memory experienceBatch = (Memory) object;
-                neuralNetArray.qTrain(
+                ensembleNet.qTrain(
                         experienceBatch.getReward(),
                         experienceBatch.getPrevState(),
                         experienceBatch.getPrevAction(),
@@ -79,7 +78,7 @@ public class NNRobot extends AIRobot {
     @Override
     public void load() {
         try {
-            neuralNetArray.load(this.getDataFile(PREV_TRAINED_WEIGHT));
+            ensembleNet.load(this.getDataFile(PREV_TRAINED_WEIGHT));
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
