@@ -16,7 +16,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 @Getter
@@ -28,7 +30,7 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
     private static final int DEFAULT_ARG_NUM_INPUT_ROWS = 1;
     private static final int DEFAULT_HIDDEN_LAYER_NUM = 20;
     private static final int DEFAULT_PRINT_CYCLE = 10000;
-    private static final double DEFAULT_ERROR_THRESHOLD = 0.05;
+    private static final double DEFAULT_ERROR_THRESHOLD = 0.01;
     private static final double DEFAULT_RAND_RANGE_DIFFERENCE = .5;
     private static final double ALPHA = 0.1;
     private static final double GAMMA = 0.9;
@@ -53,6 +55,7 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
     private Matrix outputLayerBias;
     private Matrix deltaOutputLayerBias;
     private boolean isBipolar;
+    private List<Double> errorLog = new ArrayList<>();
 
     public NeuralNetArrayImpl(
             final int argNumInputs,
@@ -137,7 +140,7 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
     }
 
     public NeuralNetArrayImpl(final String name, final State state) {
-        this(name, state, 10, 1, 0.3, 0.1, true);
+        this(name, state, 10, 1, 0.2, 0.0, true);
     }
 
     @Override
@@ -221,11 +224,14 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
         double curEpochError = 0;
         double rmsError = 0;
         do {
+            curEpochError = 0;
             for (int i = 0; i < numSample; i++) {
                 curEpochError += this.train(X[i], argValues[i]);
             }
 
             rmsError = this.rmse(curEpochError, numSample);
+
+            if (elapsedEpoch % 10 == 0) this.errorLog.add(rmsError);
 
             curEpochError /= new Integer(numSample).doubleValue();
 
