@@ -14,34 +14,49 @@ Tao Ma, 13432885
 
 <img src="img/4.a.1.png" alt="single Q value output" style="zoom:55%;" />
 
-The first option is given state action pair as inputs, and then output single Q value.
+The first option is straightforward, which is given state-action pair as inputs, and then output a single Q value.
 
 <img src="img/4.a.2.png" alt="single Q value output" style="zoom:55%;" />
 
-The second option is given states as inputs, and output Q values for different actions. 
+The second option is given states as inputs, using a neural network to compute the Q value of all the possible actions. In this way, we consider the neural network as an action selector which will choose the best action based on the state inputs.
 
 <img src="img/4.a.3.png" alt="single Q value output" style="zoom:55%;" />
 
-The third option is given neural networks as inputs, and output single Q value.
+The third option combines the previous two architectures, give neural networks as inputs, and output single Q value. If we have n actions, this model will use n neural networks to compute the Q value for each action. 
 
 
-We chose the third one to implement, since every neural net is only for one action, it will not consider other weights that can affect the Q value. In this way, we can have a more accurate result.
+Comparing these 3 architectures, we chose the third one to implement to get the better result. The reason is that, option 1 is an easier implementation, but combining the state and action together may result in issues which will reduce the model accuracy. The option 2 may converges differently for each action, which may lead to unexpected behaviours when combining several actions. The option 3 is a little complicated, but it will be more accurate since we use one NN for one action.
 
 
 #### b) Show (as a graph) the results of training your neural network using the contents of the LUT from Part 2. Your answer should describe how you found the hyper-parameters which worked best for you (i.e. momentum, learning rate, number of hidden neurons). Provide graphs to backup your selection process. Compute the RMS error for your best results. (5 pts)
 
 
-| Learning rates | 0.1 | 0.2 | 0.4 | 0.6 |
-|----------------|-----|-----|-----|-----|
-| RMS Error      |     |     |     |     |
+| Learning rates | 0.05  | 0.1   | 0.2   | 0.4   |
+|----------------|-------|-------|-------|-------|
+| RMS Error      | 0.446 | 0.450 | 0.471 | 0.497 |
 
-| Momentum  | 0.3 | 0.6 | 0.9 | 1.0 |
-|-----------|-----|-----|-----|-----|
-| RMS Error |     |     |     |     |
+<img src="img/4.b.learning.rate.png" alt="compare different learning rates" style="zoom:55%;" />
 
-| Numbers of hidden neurons | 5   | 10  | 15  | 20  |
-|---------------------------|-----|-----|-----|-----|
-| RMS Error                 |     |     |     |     |
+As we can see from the figure, RMS error will be smaller when learning rate is smaller. The possible reason is that a large learning rate allows the model to learn faster, at the cost of arriving on a sub-optimal final set of weights. A smaller learning rate may allow the model to learn a more optimal or even globally optimal set of weights but may take significantly longer to train. So to balance the tradeoff, we will set learning rate to 0.1.
+
+
+| Momentum  | 0.0   | 0.3   | 0.6   | 0.9   |
+|-----------|-------|-------|-------|-------|
+| RMS Error | 0.471 | 0.484 | 0.507 | 1.370 |
+
+<img src="img/4.b.momentum.png" alt="compare different learning rates" style="zoom:55%;" />
+
+As we can see from the figure, RMS error will be smaller when momentum is smaller. The possible reason is that, larger momentum value means more random actions. So based on the figure here, we will choose 0.0 as our momentum.
+
+
+| Numbers of hidden neurons | 5     | 10    | 15    | 20    |
+|---------------------------|-------|-------|-------|-------|
+| RMS Error                 | 0.479 | 0.471 | 0.474 | 0.472 |
+
+<img src="img/4.b.hidden.neurons.png" alt="compare different learning rates" style="zoom:55%;" />
+
+As we can see from the figure, RMS error reaches the smallest value when the number of hidden neurons is 10, so we will just go for it.
+
 
 #### c) Comment on why theoretically a neural network (or any other approach to Q-function approximation) would not necessarily need the same level of state space reduction as a look up table. (2 pts)
 
