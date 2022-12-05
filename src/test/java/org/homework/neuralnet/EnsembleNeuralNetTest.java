@@ -35,5 +35,25 @@ class EnsembleNeuralNetTest {
         final EnsembleNeuralNet ensembleNeuralNet = new EnsembleNeuralNet(Action.values().length);
 
         ensembleNeuralNet.train(lut.qTable);
+
+        for (int i = 0; i < ensembleNeuralNet.neuralNetArrays.length; i++) {
+            System.out.printf(
+                    "%s error log: %s%n",
+                    Action.values()[i].name(), ensembleNeuralNet.neuralNetArrays[i].getErrorLog());
+        }
+    }
+
+    @Test
+    void ONE_NN_FOR_EACH_ACTION_AGGREGATE_TRAIN() throws IOException {
+        // lut q table gained from AI robot
+        final String offlineTrainingDate = "robot-log/AIRobot-crazy-robot.txt";
+        final LUTImpl lut = new LUTImpl(ImmutableState.builder().build());
+        lut.load(offlineTrainingDate);
+
+        final EnsembleNeuralNet ensembleNeuralNet = new EnsembleNeuralNet(Action.values().length);
+
+        ensembleNeuralNet.train(lut.qTable, 10000, 0.01);
+
+        System.out.println(ensembleNeuralNet.getErrorLog());
     }
 }

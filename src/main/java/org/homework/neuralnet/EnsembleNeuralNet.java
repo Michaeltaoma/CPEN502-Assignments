@@ -10,7 +10,9 @@ import org.homework.util.Util;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -20,6 +22,7 @@ public class EnsembleNeuralNet {
     private static final double ALPHA = 0.1;
     private static final double GAMMA = 0.9;
     private static final double RANDOM_RATE = 0.4;
+    private final List<Double> errorLog = new ArrayList<>();
     public NeuralNetArrayImpl[] neuralNetArrays;
     public int actionSize;
 
@@ -66,6 +69,48 @@ public class EnsembleNeuralNet {
         }
     }
 
+    void train(final Map<State, double[]> qTable, final int epoch, final double errorThreshold) {
+        final double[][][] trainX =
+                new double[this.neuralNetArrays.length][qTable.size()]
+                        [ImmutableState.builder().build().getIndexedStateValue().length];
+
+        final double[][][] trainY = new double[this.neuralNetArrays.length][qTable.size()][1];
+        int elapsedEpoch = 0;
+        double totalError = 0;
+        double curEpochError;
+        double rmsError;
+        do {
+            curEpochError = 0;
+            for (final Map.Entry<State, double[]> entry : qTable.entrySet()) {
+                for (int i = 0; i < this.neuralNetArrays.length; i++) {
+                    curEpochError +=
+                            this.neuralNetArrays[i].train(
+                                    Util.getDoubleArrayFromIntArray(
+                                            entry.getKey().getIndexedStateValue()),
+                                    new double[] {entry.getValue()[i]});
+                }
+            }
+
+            rmsError = this.rmse(curEpochError, qTable.size());
+
+            totalError += rmsError;
+
+            if (elapsedEpoch % 50 == 0) this.errorLog.add(rmsError);
+
+            curEpochError /= new Integer(qTable.size()).doubleValue();
+
+            if (elapsedEpoch++ % 1000 == 0)
+                System.out.printf(
+                        "NN: Current Epoch: %d %n Current Error: %f%n Current RMSE: %f%n",
+                        elapsedEpoch, curEpochError, rmsError);
+
+        } while (elapsedEpoch++ < epoch && rmsError > errorThreshold);
+
+        System.out.printf(
+                "NN trained for %d epochs, reached error per epoch = %.2f, best error: %.2f%n",
+                elapsedEpoch, totalError / elapsedEpoch, rmsError);
+    }
+
     public int chooseAction(final State currentState) {
         if (Math.random() < RANDOM_RATE) {
             return Action.values()[new Random().nextInt(Action.values().length)].ordinal();
@@ -93,16 +138,16 @@ public class EnsembleNeuralNet {
             final State curState) {
 
         final double[] prevQ = this.forward(prevState);
-
         final double curQ = Arrays.stream(this.forward(curState)).max().orElse(0);
-
         final double loss = ALPHA * (reward + GAMMA * curQ - prevQ[prevAction.ordinal()]);
-
         final double updatedQ = prevQ[prevAction.ordinal()] + loss;
-
         this.neuralNetArrays[prevAction.ordinal()].backpropagation(
                 new Matrix(new double[][] {new double[] {prevQ[prevAction.ordinal()]}}),
                 new Matrix(new double[][] {new double[] {updatedQ}}));
+    }
+
+    private double rmse(final double sampleError, final int sampleSize) {
+        return Math.sqrt(sampleError / new Integer(sampleSize).doubleValue());
     }
 
     public void load(final File dataFile) throws IOException {}
