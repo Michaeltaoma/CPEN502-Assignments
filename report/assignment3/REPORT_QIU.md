@@ -74,17 +74,19 @@ Winning rates and RMS errors can be related to exploration in several ways. A ro
 
 Metric 1: Winning Rates
 
+<img src="img/5.a.1.png" alt="winning rates" style="zoom:55%;" />
 
 
 Metric 2: RMS Errors
 
+<img src="img/5.a.2.png" alt="rms errors" style="zoom:55%;" />
 
 
 #### b) The discount factor can be used to modify influence of future reward. Measure the performance of your robot for different values of  and plot your results. Would you expect higher or lower values to be better and why? (3 pts)
 
 The discount factor is a parameter which determines the relative importance of future rewards. A discount factor of 0 means that future rewards are not considered at all, while a discount factor of 1 means that all future rewards are considered equally.
 
-... (plot)
+<img src="img/5.b.png" alt="compare different discount factor" style="zoom:55%;" />
 
 Higher values of the discount factor are often thought to be better since they give future rewards more weight. This can aid the robot in learning longer-term tactics that might not yield results right away but might do so in the long run. Lower values of the discount factor, on the other hand, might be preferable in some situations where rewards are very erratic or the environment is changing quickly since they can assist the robot react to the changing environment more quickly.
 
