@@ -8,9 +8,9 @@ Tao Ma, 13432885
 
 ## Questions
 
-### (4) The use of a neural network to replace the look-up table and approximate the Q-function has some disadvantages and advantages.
+### (4) _The use of a neural network to replace the look-up table and approximate the Q-function has some disadvantages and advantages._
 
-#### a) There are 3 options for the architecture of your neural network. Describe and draw all three options and state which you selected and why. (3pts)
+#### a) _There are 3 options for the architecture of your neural network. Describe and draw all three options and state which you selected and why. (3pts)_
 
 <img src="img/4.a.1.png" alt="single Q value output" style="zoom:55%;" />
 
@@ -27,7 +27,7 @@ The third option combines the previous two architectures, give neural networks a
 Comparing these 3 architectures, there are pros and cons for all three options. Option 1 is an easier implementation, but combining the state and action together may result in issues which will reduce the model accuracy. The option 2 may converges differently for each action, which may lead to unexpected behaviours when combining several actions. The option 3 is a little complicated and time consuming, but it may be more accurate since we use one NN for one action. We implemented three architectures but we chose the second one to generate graphs using in the report.
 
 
-#### b) Show (as a graph) the results of training your neural network using the contents of the LUT from Part 2. Your answer should describe how you found the hyper-parameters which worked best for you (i.e. momentum, learning rate, number of hidden neurons). Provide graphs to backup your selection process. Compute the RMS error for your best results. (5 pts)
+#### b) _Show (as a graph) the results of training your neural network using the contents of the LUT from Part 2. Your answer should describe how you found the hyper-parameters which worked best for you (i.e. momentum, learning rate, number of hidden neurons). Provide graphs to backup your selection process. Compute the RMS error for your best results. (5 pts)_
 
 
 | Learning rates | 0.05  | 0.1   | 0.2   | 0.4   |
@@ -57,14 +57,14 @@ As we can see from the figure, RMS error will be smaller when momentum is smalle
 As we can see from the figure, RMS error reaches the smallest value when the number of hidden neurons is 10, so we will just go for it.
 
 
-#### c) Comment on why theoretically a neural network (or any other approach to Q-function approximation) would not necessarily need the same level of state space reduction as a look up table. (2 pts)
+#### c) _Comment on why theoretically a neural network (or any other approach to Q-function approximation) would not necessarily need the same level of state space reduction as a look up table. (2 pts)_
 
 In assignment 2, the look-up table which record all states and actions before space reduction, which is very space consuming. However, neural networks and other methods for approximating Q-functions can be more flexible and efficient than lookup tables because they can generalize from examples, rather than needing to have explicit entries for every possible state. This indicates that they can frequently achieve good performance with a significantly smaller collection of states, or even by using continuous states as opposed to discrete ones. Additionally, finding accurate approximations of the Q-function can be made simpler by learning useful representations of the state space using neural networks or any other function approximations. They may be able to function well even in state spaces that are big or complex because to this.
 
 
-### (5) Hopefully you were able to train your robot to find at least one movement pattern that results in defeat of your chosen enemy tank, most of the time.
+### (5) _Hopefully you were able to train your robot to find at least one movement pattern that results in defeat of your chosen enemy tank, most of the time._
 
-#### a) Identify two metrics and use them to measure the performance of your robot with online training. I.e. during battle. Describe how the results were obtained, particularly with regard to exploration? Your answer should provide graphs to support your results. (5 pts)
+#### a) _Identify two metrics and use them to measure the performance of your robot with online training. I.e. during battle. Describe how the results were obtained, particularly with regard to exploration? Your answer should provide graphs to support your results. (5 pts)_
 
 Two metrics that could be used to measure the performance of a robot with online training are winning rates and RMS errors. Winning rates measure the percentage of battles won by the robot, while RMS errors measure the average difference between the predicted and actual values for a given dataset.
 
@@ -82,7 +82,7 @@ Metric 2: RMS Errors
 <img src="img/5.a.2.png" alt="rms errors" style="zoom:20%;" />
 
 
-#### b) The discount factor can be used to modify influence of future reward. Measure the performance of your robot for different values of  and plot your results. Would you expect higher or lower values to be better and why? (3 pts)
+#### b) _The discount factor can be used to modify influence of future reward. Measure the performance of your robot for different values of  and plot your results. Would you expect higher or lower values to be better and why? (3 pts)_
 
 The discount factor is a parameter which determines the relative importance of future rewards. A discount factor of 0 means that future rewards are not considered at all, while a discount factor of 1 means that all future rewards are considered equally.
 
@@ -90,7 +90,7 @@ The discount factor is a parameter which determines the relative importance of f
 
 Higher values of the discount factor are often thought to be better since they give future rewards more weight. This can aid the robot in learning longer-term tactics that might not yield results right away but might do so in the long run. Lower values of the discount factor, on the other hand, might be preferable in some situations where rewards are very erratic or the environment is changing quickly since they can assist the robot react to the changing environment more quickly.
 
-#### c) Theory question: With a look-up table, the TD learning algorithm is proven to converge – i.e. will arrive at a stable set of Q-values for all visited states. This is not so when the Q-function is approximated. Explain this convergence in terms of the Bellman equation and also why when using approximation, convergence is no longer guaranteed. (3 pts)
+#### c) _Theory question: With a look-up table, the TD learning algorithm is proven to converge – i.e. will arrive at a stable set of Q-values for all visited states. This is not so when the Q-function is approximated. Explain this convergence in terms of the Bellman equation and also why when using approximation, convergence is no longer guaranteed. (3 pts)_
 
 The Bellman equation has a singular solution for the Q-values of each state, demonstrating that the TD learning algorithm converges when employing a look-up table. This indicates that the algorithm will eventually reach the right Q-values for all visited states as it updates the Q-values based on the Bellman equation.
 
@@ -106,7 +106,7 @@ There is only one Q-value that fulfils the Bellman equation for any given state 
 However, convergence is no longer assured when the Q-function is estimated using a function approximation like a neural network. This is due to the fact that when the Q-function is precisely represented by a look-up table, the Bellman equation only has one unique solution for the Q-values of each state. The Q-function is simply a rough approximation of the real Q-function when approximation is used. This implies that the TD learning algorithm could not always converge to the right Q-values.
 
 
-#### d) When using a neural network for supervised learning, performance of training is typically measured by computing a total error over the training set. When using the NN for online learning of the -function in robocode this is not possible since there is no a-priori training set to work with. Suggest how you might monitor learning performance of the neural net now. (3 pts)
+#### d) _When using a neural network for supervised learning, performance of training is typically measured by computing a total error over the training set. When using the NN for online learning of the -function in robocode this is not possible since there is no a-priori training set to work with. Suggest how you might monitor learning performance of the neural net now. (3 pts)_
 
 The possible approaches to monitor the learning performance of neural net may be winning rate, the count of bullet hit, and the learning progress over time.
 
@@ -117,16 +117,16 @@ The count of bullet hit might also reflect the learning performance. Based on th
 Tracking the learning progress over time may be another strategy for assessing the neural network's performance during learning. To achieve this, the neural network could be operated in real-time while its performance on a collection of held-out episodes was regularly recorded. Then, the performance may be charted over time to demonstrate how it advances as the neural network keeps picking up new skills.
 
 
-#### e) At each time step, the neural net in your robot performs a back propagation using a single training vector provided by the RL agent. Modify your code so that it keeps an array of the last say n training vectors and at each time step performs n back propagations. Using graphs compare the performance of your robot for different values of n. (4 pts)
+#### e) _At each time step, the neural net in your robot performs a back propagation using a single training vector provided by the RL agent. Modify your code so that it keeps an array of the last say n training vectors and at each time step performs n back propagations. Using graphs compare the performance of your robot for different values of n. (4 pts)_
 
 <img src="img/5.e.png" alt="rms errors" style="zoom:20%;" />
 
 We chose n = 10 and n = 100 to draw the graph, we can see that n = 10 is not learning, while the winning rate increases gradually when n = 100. Using a larger amount of n will allow the neural network to learn more effectively from a larger amount of training data. 
 
 
-### (6) Overall Conclusions
+### (6) _Overall Conclusions_
 
-#### a) This question is open-ended and offers you an opportunity to reflect on what you have learned overall through this project. For example, what insights are you able to offer with regard to the practical issues surrounding the application of RL & BP to your problem? E.g. What could you do to improve the performance of your robot? How would you suggest convergence problems be addressed? What advice would you give when applying RL with neural network based function approximation to other practical applications? (4 pts)
+#### a) _This question is open-ended and offers you an opportunity to reflect on what you have learned overall through this project. For example, what insights are you able to offer with regard to the practical issues surrounding the application of RL & BP to your problem? E.g. What could you do to improve the performance of your robot? How would you suggest convergence problems be addressed? What advice would you give when applying RL with neural network based function approximation to other practical applications? (4 pts)_
 
 - What could you do to improve the performance of your robot?
 
@@ -141,7 +141,7 @@ I would suggest using regularization techniques, such as weight decay and dropou
 I would experimenting with various function approximators, such as shallow neural networks and linear models, to recognise their advantages and disadvantages. The performance and resilience of the learnt policy can be enhanced by combining exploration and regularisation methods with adaptive learning rates and momentum.
 
 
-#### b) Theory question: Imagine a closed-loop control system for automatically delivering anesthetic to a patient under going surgery. You intend to train the controller using the approach used in this project. Discuss any concerns with this and identify one potential variation that could alleviate those concerns. (3 pts)
+#### b) _Theory question: Imagine a closed-loop control system for automatically delivering anesthetic to a patient under going surgery. You intend to train the controller using the approach used in this project. Discuss any concerns with this and identify one potential variation that could alleviate those concerns. (3 pts)_
 
 The main concern is the ethical issue. It may not be safe to utilise reinforcement learning in this setting, which is one potential worry with employing the method from this project to train a closed-loop control system for autonomously giving anaesthesia to a patient having surgery. This is due to the fact that algorithms used in reinforcement learning are created to maximise a specific reward function, which could not be consistent with the objectives of an anaesthetic delivery system. The training algorithm's reward function, for instance, can put the patient's comfort ahead of other crucial considerations like the patient's vital signs or the dosage of the anaesthetic.
 
