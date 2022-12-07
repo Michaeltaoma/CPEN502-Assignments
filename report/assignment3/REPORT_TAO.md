@@ -18,25 +18,25 @@ Tao Ma, 13432885
 
 ### Option 1
 
-<img src="/Users/michaelma/Desktop/Workspace/Screenshots/Snipaste_2022-12-04_08-15-28.png" alt="Snipaste_2022-12-04_08-15-28" style="zoom:30%;" />
+<img src="/Users/michaelma/Desktop/Workspace/Screenshots/Snipaste_2022-12-04_08-15-28.png" alt="Snipaste_2022-12-04_08-15-28" style="zoom:100%;" />
 
 The first option is to utilize a straightforward neural network as a form of predictive modelling in order to derive the Q value for the state action pair input. To be more specific, this option takes in an input vector that contains a state vector and an action vector, and it then generates a Q value that is associated with the state-action pair.
 
 ### Option 2
 
-<img src="/Users/michaelma/Desktop/Workspace/Screenshots/Snipaste_2022-12-04_08-15-28.png" alt="Snipaste_2022-12-04_08-15-28" style="zoom:30%;" />
+<img src="/Users/michaelma/Desktop/Workspace/Screenshots/Snipaste_2022-12-04_08-15-28.png" alt="Snipaste_2022-12-04_08-15-28" style="zoom:100%;" />
 
-The second option, combining the previous two options, utilize a straightforward neural network as a form of predictive modelling in order to derive the Q value of an action for the state input. This ensemble method prepare $n$ neural networks for $n$ possible action. When a state vector is being fed into the model, $n$ neural networks work together to compute the $Q \ value \in {\Bbb R}^{Num\ of \ Actions}$ for each action individually.
+The second option, combining the other two options, utilize a straightforward neural network as a form of predictive modelling in order to derive the Q value of an action for the state input. This ensemble method prepare $n$ neural networks for $n$ possible action. When a state vector is being fed into the model, $n$ neural networks work together to compute the $Q \ value \in {\Bbb R}^{Num\ of \ Actions}$ for each action individually.
 
 ### Option 3
 
-<img src="/Users/michaelma/Desktop/Workspace/Screenshots/Snipaste_2022-12-04_08-17-32.png" alt="Snipaste_2022-12-04_08-17-32" style="zoom:30%;" />
+<img src="/Users/michaelma/Desktop/Workspace/Screenshots/Snipaste_2022-12-04_08-17-32.png" alt="Snipaste_2022-12-04_08-17-32" style="zoom:100%;" />
 
 The third option is to utilize a simple neural network to compute the corresponding Q value vectors of all the possible actions for the corresponding state input. More specifically, this neural network computes a vector of $Q \ value \in {\Bbb R}^{Num\ of \ Actions}$ from a state vectors consist of  $state\ \in {\Bbb R}^{Num\ of \ States}$. This architecture also enable adapting the neural network into a multi-label classification problem. To be more explicit, rather than considering the neural network as a model that predicts the Q values for each action, we may view the neural network as an action selector that chooses the best action based on the state input. This allows for a more accurate representation of the network's capabilities. However, it is important to take into consideration that the final layer should be changed to a softmax layer in this scenario. 
 
 In the context of this assignment, we have implemented all three of them, and we have decided to report using Option 3 as our model. In this part of the article, we will begin by discussing these three possibilities and explaining the thought process that went into reaching our decision. These three choices each come with their own set of advantages to consider. For instance, Option 1 enables an easier implementation, and the computation is uncomplicated; however, concatenating the state vector and the action vector together could result in an issue due to the fact that they come from distinct distributions. Option 3 is intended to be a standardized approach to the problem of multi-label prediction; but, by choosing this option, you will lose more granular control over each operation. The accompanying graphic demonstrates that each action converges at a different rate (see below graph), and it is possible that combining several actions will result in unexpected behaviour. In the end, we decided that Option 3 would be the best model to report. Option 2 has some severe complexity issues, such as the fact that we have to run $n$ times more predictions for $n$ actions, but it does provide clearer illustrations for the analysis of each action and provides for better control over the activities. However, Option 2 ignores the competition behind actions. For example, imaging you are the robot and you are running into a state, you need to compare action to find the best action. Option 2 only consider action individually but a robot need to consider the whole action set to make decision.
 
-<img src="/Users/michaelma/Downloads/test(1).png" alt="test(1)" style="zoom:24%;" />
+<img src="/Users/michaelma/Downloads/test(1).png" alt="test(1)" style="zoom:100%;" />
 
 #### b) 
 
@@ -50,11 +50,11 @@ In the context of this assignment, we have implemented all three of them, and we
 | -------------- | ----- | ----- | ----- | ----- |
 | RMS Error      | 0.439 | 0.462 | 0.494 | 0.514 |
 
-<img src="/Users/michaelma/Downloads/test(2).png" alt="test(2)" style="zoom:24%;" />
+<img src="/Users/michaelma/Downloads/test(2).png" alt="test(2)" style="zoom:100%;" />
 
 When the learning rate is held constant, we are able to see that the error produced by the network continues to get progressively better. However, we discovered that a decline in performance occurs if the rate of learning is increased. We hypothesise that the huge step of tested learning rate is to blame for the low performance because this is the most likely explanation. We may imagine that the value of the learning rate hyperparameter affects how big of a step the model takes while descending down the hill towards where the derivative points to. This is controlled by the learning rate hyperparameter, which governs the rate or speed at which the model learns. When the learning rate is excessively high, the model may arrive at a final set of weights that is less than ideal very rapidly. To show that it's the case, I draw another graph with Learning Rate 0.125 and 0.1 shown below
 
-<img src="/Users/michaelma/Downloads/test(5).png" alt="test(5)" style="zoom:24%;" />
+<img src="/Users/michaelma/Downloads/test(5).png" alt="test(5)" style="zoom:100%;" />
 
 At around Epoch 12, the model with learning rate 0.12 converges quicker than the model with learning rate 0.1. From that point on, however, the model with a learning rate of 0.12 remained in a suboptimal position and was surpassed by the model with a learning rate of 0.1. 
 
@@ -66,7 +66,7 @@ At around Epoch 12, the model with learning rate 0.12 converges quicker than the
 | :-------- | ----- | ----- | ----- | ----- |
 | RMS Error | 0.439 | 0.454 | 0.476 | 0.902 |
 
-<img src="/Users/michaelma/Downloads/test(3).png" alt="test(3)" style="zoom:24%;" />
+<img src="/Users/michaelma/Downloads/test(3).png" alt="test(3)" style="zoom:100%;" />
 
 Momentum is a method for accelerating model convergence. As seen in the graph, as momentum increases, initial convergence speed increases, but models with greater momentum values quickly become stuck in suboptimal states. When momentum is set to 0.9, the gradient of each learning step is significantly influenced by the gradient of the previous step.  ($\text{momentum}\times \Delta^{t-1}_{ij}$). Consider also that the model used a learning rate of 0.1 in this experiment, resulting in the model exhibiting bizarre random behaviour because it was heavily influenced by momentum and the effect of momentum already outweighed learning rate significantly. 
 
@@ -78,7 +78,7 @@ Momentum is a method for accelerating model convergence. As seen in the graph, a
 | ------------------------- | ----- | ----- | ----- | ----- |
 | RMS Error                 | 0.465 | 0.439 | 0.431 | 0.427 |
 
-<img src="/Users/michaelma/Downloads/test(4).png" alt="test(4)" style="zoom:24%;" />
+<img src="/Users/michaelma/Downloads/test(4).png" alt="test(4)" style="zoom:100%;" />
 
 The number of hidden neurons has a direct impact on the model's performance. With more hidden neurons, the model can represent more complex input and generalise more effectively. 
 
@@ -138,7 +138,7 @@ $$
 $$
 However, to showcase the learning process of our model, we modified the metric to be "winning rounds for each 100 rounds" such that we recorded the metric winning rates for each 100 rounds our robot played and we plot a graph to show the changing of winning rate of our robot during online training.
 
-<img src="/Users/michaelma/Downloads/win-round-OffPolicy-ImmediateReward-0.3(1).png" alt="win-round-OffPolicy-ImmediateReward-0.3(1)" style="zoom:24%;" />
+<img src="/Users/michaelma/Downloads/win-round-OffPolicy-ImmediateReward-0.3(1).png" alt="win-round-OffPolicy-ImmediateReward-0.3(1)" style="zoom:100%;" />
 
 ##### Metric 2: RMS Errors
 
@@ -148,7 +148,7 @@ $$
 $$
 RMS Error is a popular metric for evaluating the performance of a model, especially in the context of regression tasks. It is a measurement of the average mistake in a model's predictions and can be read as the standard deviation of the residuals (the difference between the predicted values and the true values). RMS error is a valuable metric for evaluating the overall performance of a model since it provides a straightforward and interpretable measure of the error's size. It is crucial to remember, however, that RMS error alone may not provide a whole picture of a model's performance; other measures, such as mean absolute error or mean absolute percentage error, may also be worth evaluating. In addition, the utility of RMS error as a performance statistic might vary depending on the particular context and objectives of a given model. However, due to the time constraint of this assignment, we only consider these two metrics.
 
-<img src="/Users/michaelma/Downloads/test(7).png" alt="test(7)" style="zoom:24%;" />
+<img src="/Users/michaelma/Downloads/test(7).png" alt="test(7)" style="zoom:100%;" />
 
 We can observe that the model performance is relatively poorly. Even though converge by a bit, the model still suffers from serious performance issue. There are several reasons for this and we tend to discuss them in this section.
 
@@ -160,7 +160,7 @@ We can observe that the model performance is relatively poorly. Even though conv
 
 *Question: The discount factor can be used to modify influence of future reward. Measure the performance of your robot for different values of  and plot your results. Would you expect higher or lower values to be better and why? (3 pts)*
 
-<img src="/Users/michaelma/Downloads/gamma.png" alt="gamma" style="zoom:24%;" />
+<img src="/Users/michaelma/Downloads/gamma.png" alt="gamma" style="zoom:100%;" />
 
  In my opinion, both higher and lower value could impact the model in different ways. The discount factor is used to determine the discounted future value of a state, which is defined as the sum of the immediate reward and the discounted future value of the next state. A higher discount factor will give future benefits greater weight, whereas a lower discount factor will give future rewards less weight. Therefore, in order to train the robot with the best hyperparameters, we need to test with different gamma value 
 
