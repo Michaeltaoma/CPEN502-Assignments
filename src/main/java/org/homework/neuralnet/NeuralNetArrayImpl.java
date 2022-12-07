@@ -6,7 +6,7 @@ import lombok.Setter;
 import org.homework.neuralnet.matrix.Matrix;
 import org.homework.robot.model.Action;
 import org.homework.robot.model.State;
-import org.homework.util.Util;
+import robocode.RobocodeFileOutputStream;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -27,14 +27,15 @@ import java.util.Random;
 public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
     private static final String DEFAULT_NAME = "NN";
     private static final long DEFAULT_EPOCH_CAPS = 1000;
+    private static final boolean KEEP = false;
     private static final int DEFAULT_ARG_NUM_INPUT_ROWS = 1;
     private static final int DEFAULT_HIDDEN_LAYER_NUM = 20;
     private static final int DEFAULT_PRINT_CYCLE = 10000;
     private static final double DEFAULT_ERROR_THRESHOLD = 0.01;
     private static final double DEFAULT_RAND_RANGE_DIFFERENCE = .5;
     private static final double ALPHA = 0.1;
-    private static final double GAMMA = 0.9;
-    private static final double RANDOM_RATE = 0.4;
+    private static final double GAMMA = 0.3;
+    private static final double RANDOM_RATE = 0.1;
     private String name;
     private int argNumInputs;
     private int argNumOutputs;
@@ -56,6 +57,7 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
     private Matrix deltaOutputLayerBias;
     private boolean isBipolar;
     private List<Double> errorLog = new ArrayList<>();
+    private double qTrainSampleError = 0;
 
     public NeuralNetArrayImpl(
             final int argNumInputs,
@@ -140,7 +142,7 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
     }
 
     public NeuralNetArrayImpl(final String name, final State state) {
-        this(name, state, 10, 1, 0.2, 0.0, true);
+        this(name, state, 20, 1, 0.05, 0.02, true);
     }
 
     @Override
@@ -174,8 +176,7 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
     }
 
     public Matrix forward(final State state) {
-        return this.forward(
-                new double[][] {Util.getDoubleArrayFromIntArray(state.getIndexedStateValue())});
+        return this.forward(new double[][] {state.getTrainingData(KEEP)});
     }
 
     public Matrix batchForward(final double[][] X) {
@@ -204,7 +205,6 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
         final Matrix output = this.forward(new double[][] {X});
         final Matrix targetOutput = new Matrix(new double[][] {argValue});
         final Matrix lossValue = this.loss(output, targetOutput, 0.5);
-        //        final double error = lossValue.sum(0).sumNumber().doubleValue();
         final double error = lossValue.sumValues();
         this.backpropagation(output, targetOutput);
         return error;
@@ -347,7 +347,7 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
         return 1 / (1 + Math.exp(-x));
     }
 
-    private double rmse(final double sampleError, final int sampleSize) {
+    public double rmse(final double sampleError, final int sampleSize) {
         return Math.sqrt(sampleError / new Integer(sampleSize).doubleValue());
     }
 
@@ -404,9 +404,20 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
 
     @Override
     public void save(final File argFile) {
+        this.save(argFile, false);
+    }
+
+    private PrintStream getPrintStream(final File argFile, final boolean isRobocode)
+            throws IOException {
+        return new PrintStream(
+                isRobocode
+                        ? new RobocodeFileOutputStream(argFile)
+                        : new FileOutputStream(argFile, false));
+    }
+
+    public void save(final File argFile, final boolean isRobocode) {
         try {
-            final FileOutputStream fileOutputStream = new FileOutputStream(argFile, false);
-            final PrintStream printStream = new PrintStream(fileOutputStream);
+            final PrintStream printStream = this.getPrintStream(argFile, isRobocode);
 
             // weights
             final long inputToHiddenWeightRows = this.inputToHiddenWeight.rowNum;
@@ -590,12 +601,7 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
         Action action = Action.AHEAD;
 
         final double[] curQ =
-                this.forward(
-                                new double[][] {
-                                    Util.getDoubleArrayFromIntArray(
-                                            currentState.getIndexedStateValue())
-                                })
-                        .data[0];
+                this.forward(new double[][] {currentState.getTrainingData(KEEP)}).data[0];
 
         for (int i = 0; i < Action.values().length; i++) {
             if (max < curQ[i]) {
@@ -614,21 +620,10 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
             final State curState) {
 
         final double[] prevQ =
-                this.forward(
-                                new double[][] {
-                                    Util.getDoubleArrayFromIntArray(
-                                            prevState.getIndexedStateValue())
-                                })
-                        .data[0];
+                this.forward(new double[][] {prevState.getTrainingData(KEEP)}).data[0];
 
         final double curQ =
-                Arrays.stream(
-                                this.forward(
-                                                new double[][] {
-                                                    Util.getDoubleArrayFromIntArray(
-                                                            curState.getIndexedStateValue())
-                                                })
-                                        .data[0])
+                Arrays.stream(this.forward(new double[][] {curState.getTrainingData(KEEP)}).data[0])
                         .max()
                         .orElse(0);
 
@@ -639,39 +634,12 @@ public class NeuralNetArrayImpl implements NeuralNetInterface, Serializable {
         final double[] targetQ = prevQ.clone();
         targetQ[prevAction.ordinal()] = updatedQ;
 
-        this.backpropagation(
-                new Matrix(new double[][] {prevQ}), new Matrix(new double[][] {targetQ}));
-    }
-
-    public void sarsa(
-            final double reward,
-            final State prevState,
-            final Action prevAction,
-            final State curState,
-            final Action curAction) {
-
-        final double[] prevQ =
-                this.forward(
-                                new double[][] {
-                                    Util.getDoubleArrayFromIntArray(
-                                            prevState.getIndexedStateValue())
-                                })
-                        .data[0];
-
-        final double[] curQ =
-                this.forward(
-                                new double[][] {
-                                    Util.getDoubleArrayFromIntArray(curState.getIndexedStateValue())
-                                })
-                        .data[0];
-
-        final double[] targetQ = prevQ.clone();
-        targetQ[prevAction.ordinal()] =
-                prevQ[prevAction.ordinal()]
-                        + ALPHA
-                                * (reward
-                                        + GAMMA * curQ[curAction.ordinal()]
-                                        - prevQ[prevAction.ordinal()]);
+        this.qTrainSampleError +=
+                (this.loss(
+                                new Matrix(new double[][] {prevQ}),
+                                new Matrix(new double[][] {targetQ}),
+                                0.5)
+                        .sumValues());
 
         this.backpropagation(
                 new Matrix(new double[][] {prevQ}), new Matrix(new double[][] {targetQ}));
