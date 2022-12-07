@@ -24,7 +24,7 @@ The second option is given states as inputs, using a neural network to compute t
 
 The third option combines the previous two architectures, give neural networks as inputs, and output single Q value. If we have n actions, this model will use n neural networks to compute the Q value for each action.
 
-Comparing these 3 architectures, we chose the third one to implement to get the better result. The reason is that, option 1 is an easier implementation, but combining the state and action together may result in issues which will reduce the model accuracy. The option 2 may converges differently for each action, which may lead to unexpected behaviours when combining several actions. The option 3 is a little complicated, but it will be more accurate since we use one NN for one action.
+Comparing these 3 architectures, there are pros and cons for all three options. Option 1 is an easier implementation, but combining the state and action together may result in issues which will reduce the model accuracy. The option 2 may converges differently for each action, which may lead to unexpected behaviours when combining several actions. The option 3 is a little complicated and time consuming, but it may be more accurate since we use one NN for one action. We implemented three architectures but we chose the second one to generate graphs using in the report.
 
 
 #### b) Show (as a graph) the results of training your neural network using the contents of the LUT from Part 2. Your answer should describe how you found the hyper-parameters which worked best for you (i.e. momentum, learning rate, number of hidden neurons). Provide graphs to backup your selection process. Compute the RMS error for your best results. (5 pts)
@@ -74,12 +74,12 @@ Winning rates and RMS errors can be related to exploration in several ways. A ro
 
 Metric 1: Winning Rates
 
-<img src="img/5.a.1.png" alt="winning rates" style="zoom:55%;" />
+<img src="img/5.a.1.png" alt="winning rates" style="zoom:15%;" />
 
 
 Metric 2: RMS Errors
 
-<img src="img/5.a.2.png" alt="rms errors" style="zoom:55%;" />
+<img src="img/5.a.2.png" alt="rms errors" style="zoom:20%;" />
 
 
 #### b) The discount factor can be used to modify influence of future reward. Measure the performance of your robot for different values of  and plot your results. Would you expect higher or lower values to be better and why? (3 pts)
@@ -119,7 +119,10 @@ Tracking the learning progress over time may be another strategy for assessing t
 
 #### e) At each time step, the neural net in your robot performs a back propagation using a single training vector provided by the RL agent. Modify your code so that it keeps an array of the last say n training vectors and at each time step performs n back propagations. Using graphs compare the performance of your robot for different values of n. (4 pts)
 
-(plot)
+<img src="img/5.e.png" alt="rms errors" style="zoom:20%;" />
+
+We chose n = 10 and n = 100 to draw the graph, we can see that n = 10 is not learning, while the winning rate increases gradually when n = 100. Using a larger amount of n will allow the neural network to learn more effectively from a larger amount of training data. 
+
 
 ### (6) Overall Conclusions
 
