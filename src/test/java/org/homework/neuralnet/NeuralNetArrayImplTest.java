@@ -4,7 +4,6 @@ import org.homework.rl.LUTImpl;
 import org.homework.robot.model.Action;
 import org.homework.robot.model.ImmutableState;
 import org.homework.robot.model.State;
-import org.homework.util.Util;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -94,7 +93,7 @@ class NeuralNetArrayImplTest {
         int count = 0;
 
         for (final Map.Entry<State, double[]> entry : lut.qTable.entrySet()) {
-            trainX[count] = Util.getDoubleArrayFromIntArray(entry.getKey().getIndexedStateValue());
+            trainX[count] = entry.getKey().getTrainingData(true);
             trainY[count++] = entry.getValue();
         }
 

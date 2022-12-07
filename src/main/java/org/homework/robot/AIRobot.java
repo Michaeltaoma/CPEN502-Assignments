@@ -35,10 +35,10 @@ public class AIRobot extends AdvancedRobot {
     private static final double BASIC_REWARD = .5;
     public static State currentState = ImmutableState.builder().build();
     public static State prevState = ImmutableState.builder().from(currentState).build();
-    private static LogFileUtil log = new LogFileUtil();
+    public static int winRound = 0;
+    public static int totalRound = 0;
+    public static LogFileUtil log = new LogFileUtil();
     private static NeuralNetArrayImpl neuralNetArray = new NeuralNetArrayImpl();
-    private static int winRound = 0;
-    private static int totalRound = 0;
     private static int rounds = 0;
     private static LUTImpl lut = new LUTImpl(currentState);
     private final boolean isOnPolicy = false;
@@ -171,7 +171,7 @@ public class AIRobot extends AdvancedRobot {
         if ((totalRound % round == 0) && (totalRound != 0)) {
             final double winPercentage = (double) winRound / round;
             final File folderDst1 = this.getDataFile(this.getWinRoundLogFileName());
-            log.writeToFile(folderDst1, winPercentage, ++rounds);
+            log.writeToFile(folderDst1, winPercentage, ++rounds, true);
             winRound = 0;
         }
     }

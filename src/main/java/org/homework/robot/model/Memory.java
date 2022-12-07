@@ -23,4 +23,9 @@ public abstract class Memory {
     public Action getPrevAction() {
         return Action.values()[0];
     }
+
+    @Override
+    public String toString() {
+        return String.format("Prev: %s %n Current: %s %n", this.getPrevState(), this.getCurState());
+    }
 }
