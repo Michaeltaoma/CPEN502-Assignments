@@ -2,11 +2,11 @@ package org.homework.neuralnet;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.homework.neuralnet.matrix.Matrix;
 import org.homework.robot.model.Action;
 import org.homework.robot.model.ImmutableState;
 import org.homework.robot.model.State;
-import org.homework.util.Util;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,13 +18,16 @@ import java.util.Random;
 
 @NoArgsConstructor
 @Getter
+@Setter
 public class EnsembleNeuralNet {
     private static final double ALPHA = 0.1;
-    private static final double GAMMA = 0.9;
-    private static final double RANDOM_RATE = 0.4;
+    private static final double GAMMA = 0.5;
+    private static final double RANDOM_RATE = 0.1;
+    private static final boolean KEEP = false;
     private final List<Double> errorLog = new ArrayList<>();
     public NeuralNetArrayImpl[] neuralNetArrays;
     public int actionSize;
+    private double qTrainSampleError = 0;
 
     public EnsembleNeuralNet(final int actionSize) {
         this.actionSize = actionSize;
@@ -57,8 +60,7 @@ public class EnsembleNeuralNet {
 
         for (final Map.Entry<State, double[]> entry : qTable.entrySet()) {
             for (int i = 0; i < this.neuralNetArrays.length; i++) {
-                trainX[i][curCount] =
-                        Util.getDoubleArrayFromIntArray(entry.getKey().getIndexedStateValue());
+                trainX[i][curCount] = entry.getKey().getTrainingData(KEEP);
                 trainY[i][curCount] = new double[] {entry.getValue()[i]};
             }
             curCount++;
@@ -70,11 +72,6 @@ public class EnsembleNeuralNet {
     }
 
     void train(final Map<State, double[]> qTable, final int epoch, final double errorThreshold) {
-        final double[][][] trainX =
-                new double[this.neuralNetArrays.length][qTable.size()]
-                        [ImmutableState.builder().build().getIndexedStateValue().length];
-
-        final double[][][] trainY = new double[this.neuralNetArrays.length][qTable.size()][1];
         int elapsedEpoch = 0;
         double totalError = 0;
         double curEpochError;
@@ -85,8 +82,7 @@ public class EnsembleNeuralNet {
                 for (int i = 0; i < this.neuralNetArrays.length; i++) {
                     curEpochError +=
                             this.neuralNetArrays[i].train(
-                                    Util.getDoubleArrayFromIntArray(
-                                            entry.getKey().getIndexedStateValue()),
+                                    entry.getKey().getTrainingData(KEEP),
                                     new double[] {entry.getValue()[i]});
                 }
             }
@@ -107,7 +103,7 @@ public class EnsembleNeuralNet {
         } while (elapsedEpoch++ < epoch && rmsError > errorThreshold);
 
         System.out.printf(
-                "NN trained for %d epochs, reached error per epoch = %.2f, best error: %.2f%n",
+                "NN trained for %d epochs, reached error per eentry.getKey().getTrainingData(KEEP)poch = %.2f, best error: %.2f%n",
                 elapsedEpoch, totalError / elapsedEpoch, rmsError);
     }
 
@@ -141,6 +137,18 @@ public class EnsembleNeuralNet {
         final double curQ = Arrays.stream(this.forward(curState)).max().orElse(0);
         final double loss = ALPHA * (reward + GAMMA * curQ - prevQ[prevAction.ordinal()]);
         final double updatedQ = prevQ[prevAction.ordinal()] + loss;
+
+        this.qTrainSampleError +=
+                this.neuralNetArrays[prevAction.ordinal()]
+                        .loss(
+                                new Matrix(
+                                        new double[][] {
+                                            new double[] {prevQ[prevAction.ordinal()]}
+                                        }),
+                                new Matrix(new double[][] {new double[] {updatedQ}}),
+                                0.5)
+                        .sumValues();
+
         this.neuralNetArrays[prevAction.ordinal()].backpropagation(
                 new Matrix(new double[][] {new double[] {prevQ[prevAction.ordinal()]}}),
                 new Matrix(new double[][] {new double[] {updatedQ}}));

@@ -1,5 +1,6 @@
 package org.homework.robot.model;
 
+import org.homework.util.Util;
 import org.immutables.value.Value;
 
 import java.util.Arrays;
@@ -42,6 +43,18 @@ public abstract class State {
     }
 
     @Value.Default
+    public double[] getDequantizedState() {
+        return new double[7];
+    }
+
+    @Value.Default
+    public double[] getTrainingData(final boolean keep) {
+        return keep
+                ? Util.getDoubleArrayFromIntArray(this.getIndexedStateValue())
+                : this.getDequantizedState();
+    }
+
+    @Value.Default
     public int[] getIndexedStateValue() {
         return new int[] {
             this.getCurrentHP().ordinal(),
@@ -68,11 +81,11 @@ public abstract class State {
 
         final State state = (State) obj;
 
-        return Arrays.equals(this.getIndexedStateValue(), state.getIndexedStateValue());
+        return Arrays.equals(this.getDequantizedState(), state.getDequantizedState());
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(this.getIndexedStateValue());
+        return Arrays.hashCode(this.getDequantizedState());
     }
 }
